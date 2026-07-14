@@ -1,4 +1,4 @@
-import com.github.salandora.sophisticatedcorebuild.SophisticatedCoreBuildPlugin
+﻿import com.github.salandora.sophisticatedcorebuild.SophisticatedCoreBuildPlugin
 import net.fabricmc.loom.task.ValidateMixinNameTask
 import net.fabricmc.loom.util.gradle.SourceSetHelper
 import net.fabricmc.loom.util.gradle.SourceSetReference
@@ -44,8 +44,8 @@ repositories {
         name = "GitHubPackages"
         url = uri("https://maven.pkg.github.com/Salandora/Porting-Lib")
         credentials {
-            username = System.getenv("USERNAME")
-            password = System.getenv("READ_PACKAGES_TOKEN")
+            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+            password = project.findProperty("gpr.key") ?: System.getenv("READ_PACKAGES_TOKEN")
         }
         content {
             includeGroupByRegex "io.github.fabricators_of_create.Porting-Lib.*"
