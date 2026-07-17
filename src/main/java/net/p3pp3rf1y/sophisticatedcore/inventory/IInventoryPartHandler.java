@@ -2,7 +2,7 @@ package net.p3pp3rf1y.sophisticatedcore.inventory;
 
 import com.mojang.datafixers.util.Pair;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -67,7 +67,7 @@ public interface IInventoryPartHandler {
 	String getName();
 
 	@Nullable
-	default Pair<ResourceLocation, ResourceLocation> getNoItemIcon(int slot) {
+	default Pair<Identifier, Identifier> getNoItemIcon(int slot) {
 		return null;
 	}
 

@@ -1,1 +1,7 @@
-{"parent":"sophisticatedcore:item/bucket","fluid":"sophisticatedcore:xp_still","loader":"sophisticatedcore:fluid_container"}
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:item/bucket",
+    "layer1": "sophisticatedcore:item/mask/bucket_fluid"
+  }
+}

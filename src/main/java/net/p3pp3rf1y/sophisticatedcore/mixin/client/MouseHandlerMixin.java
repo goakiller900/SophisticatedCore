@@ -1,6 +1,5 @@
 package net.p3pp3rf1y.sophisticatedcore.mixin.client;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.world.InteractionResult;
@@ -18,9 +17,13 @@ public class MouseHandlerMixin {
     @Final
     private Minecraft minecraft;
 
-    @Inject(method = "onScroll", at = @At(value = "FIELD", target = "Lnet/minecraft/client/MouseHandler;accumulatedScrollY:D", ordinal = 6, shift = At.Shift.AFTER), cancellable = true)
-    private void  sophisticatedCore$onScroll(long handle, double xOffset, double yOffset, CallbackInfo ci, @Local(ordinal = 2) double deltaX, @Local(ordinal = 3) double deltaY) {
-        if (handle == this.minecraft.getWindow().getWindow()) {
+    @Inject(method = "onScroll", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Gui;overlay()Lnet/minecraft/client/gui/screens/Overlay;"), cancellable = true)
+    private void sophisticatedCore$onScroll(long handle, double xOffset, double yOffset, CallbackInfo ci) {
+        if (handle == this.minecraft.getWindow().handle()) {
+			boolean discreteScroll = minecraft.options.discreteMouseScroll().get();
+			double sensitivity = minecraft.options.mouseWheelSensitivity().get();
+			double deltaX = (discreteScroll ? Math.signum(xOffset) : xOffset) * sensitivity;
+			double deltaY = (discreteScroll ? Math.signum(yOffset) : yOffset) * sensitivity;
             var result = ClientRawInputEvent.MOUSE_SCROLLED.invoker().mouseScrolled(minecraft, deltaX, deltaY);
             if (result != InteractionResult.PASS)
                 ci.cancel();

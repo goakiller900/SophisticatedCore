@@ -1,8 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.fluid;
 
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
-import io.github.fabricators_of_create.porting_lib.transfer.MutableContainerItemContext;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -23,6 +21,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -87,8 +86,8 @@ public class FluidUtil {
 			extraction.commit();
 		}
 
-		if (level.dimensionType().ultraWarm() && fluid.defaultFluidState().is(FluidTags.WATER)) {
-			level.playSound(player, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5f, 2.6f + (level.random.nextFloat() - level.random.nextFloat()) * 0.8f);
+		if (level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES) && fluid.defaultFluidState().is(FluidTags.WATER)) {
+			level.playSound(player, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5f, 2.6f + (level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.8f);
 			for (int i = 0; i < 8; ++i) {
 				level.addParticle(ParticleTypes.LARGE_SMOKE, (double) pos.getX() + Math.random(), (double) pos.getY() + Math.random(), (double) pos.getZ() + Math.random(), 0.0, 0.0, 0.0);
 			}
@@ -101,7 +100,7 @@ public class FluidUtil {
 			return true;
 		}
 
-		if (!level.isClientSide && state.canBeReplaced(fluid) && !state.liquid()) {
+		if (!level.isClientSide() && state.canBeReplaced(fluid) && !state.liquid()) {
 			level.destroyBlock(pos, true);
 		}
 
@@ -185,7 +184,7 @@ public class FluidUtil {
                     }
 
                     if (player != null) {
-						player.playNotifySound(sound, SoundSource.BLOCKS, 1, 1);
+						player.playSound(sound, 1, 1);
 					}
 
                     return true;
@@ -268,7 +267,7 @@ public class FluidUtil {
 
 					// give it to the player or drop it at their feet
 					if (!remainder.isEmpty() && player != null && doFill) {
-						ItemHandlerHelper.giveItemToPlayer(player, remainder);
+						player.getInventory().placeItemBackInInventory(remainder);
 					}
 
 					ItemStack containerCopy = container.copy();
@@ -306,7 +305,7 @@ public class FluidUtil {
 
 					// give it to the player or drop it at their feet
 					if (!remainder.isEmpty() && player != null && doDrain) {
-						ItemHandlerHelper.giveItemToPlayer(player, remainder);
+						player.getInventory().placeItemBackInInventory(remainder);
 					}
 
 					ItemStack containerCopy = container.copy();

@@ -24,6 +24,6 @@ public class CookingUpgradeRenderData implements IUpgradeRenderData {
 	}
 
 	public static CookingUpgradeRenderData deserializeNBT(CompoundTag nbt) {
-		return new CookingUpgradeRenderData(nbt.getBoolean("burning"));
+		return new CookingUpgradeRenderData(nbt.getBooleanOr("burning", false));
 	}
 }

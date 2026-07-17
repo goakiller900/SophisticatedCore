@@ -1,16 +1,18 @@
 package net.p3pp3rf1y.sophisticatedcore.client.gui.controls;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Dimension;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Position;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public class TextBox extends WidgetBase {
@@ -24,22 +26,18 @@ public class TextBox extends WidgetBase {
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
-		//noop
+	protected void extractBg(GuiGraphicsExtractor guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
+		// noop
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
-		poseStack.translate(0, 0, 100);
-		editBox.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+	protected void extractWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		editBox.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 		if (editBox.getValue().isEmpty() && unfocusedEmptyHint != null && !editBox.isFocused()) {
-			int x = editBox.getX() + editBox.getWidth() / 2 + 2/* editBox.isBordered() ? editBox.getX() + 4 : editBox.getX()*/;
+			int x = editBox.getX() + editBox.getWidth() / 2 + 2/* editBox.isBordered() ? editBox.getX() + 4 : editBox.getX() */;
 			int y = editBox.isBordered() ? editBox.getY() + (editBox.getHeight() - 8) / 2 : editBox.getY();
-			guiGraphics.drawCenteredString(this.font, unfocusedEmptyHint, x, y, editBox.textColor);
+			guiGraphics.centeredText(font, unfocusedEmptyHint, x, y, ARGB.opaque(editBox.textColor));
 		}
-		poseStack.popPose();
 	}
 
 	@Override
@@ -51,19 +49,19 @@ public class TextBox extends WidgetBase {
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	public boolean keyPressed(KeyEvent event) {
 		if (!editBox.isFocused()) {
 			return false;
 		}
-		editBox.keyPressed(keyCode, scanCode, modifiers);
-		if (keyCode == GLFW.GLFW_KEY_ENTER) {
+		editBox.keyPressed(event);
+		if (event.key() == GLFW.GLFW_KEY_ENTER) {
 			onEnterPressed();
 		}
-		return keyCode != GLFW.GLFW_KEY_ESCAPE;
+		return event.key() != GLFW.GLFW_KEY_ESCAPE;
 	}
 
 	protected void onEnterPressed() {
-		//noop
+		// noop
 	}
 
 	public String getValue() {
@@ -71,8 +69,8 @@ public class TextBox extends WidgetBase {
 	}
 
 	@Override
-	public boolean charTyped(char codePoint, int modifiers) {
-		return editBox.charTyped(codePoint, modifiers);
+	public boolean charTyped(CharacterEvent event) {
+		return editBox.charTyped(event);
 	}
 
 	@Override

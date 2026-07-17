@@ -7,7 +7,7 @@ import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
@@ -53,7 +53,7 @@ public class ShapelessBasedRecipeBuilder extends SCShapelessRecipeBuilder {
 	}
 
 	@Override
-	public void save(RecipeOutput recipeOutput, ResourceLocation id) {
+	public void save(RecipeOutput recipeOutput, ResourceKey<Recipe<?>> id) {
 		HoldingRecipeOutput holdingRecipeOutput = new HoldingRecipeOutput(recipeOutput.advancement());
 		super.save(holdingRecipeOutput, id);
 
@@ -67,13 +67,18 @@ public class ShapelessBasedRecipeBuilder extends SCShapelessRecipeBuilder {
 	protected RecipeOutput withConditions(final RecipeOutput exporter, final ResourceCondition... conditions) {
 		Preconditions.checkArgument(conditions.length > 0, "Must add at least one condition.");
 		return new RecipeOutput() {
-			public void accept(ResourceLocation identifier, Recipe<?> recipe, @Nullable AdvancementHolder advancementEntry) {
+			public void accept(ResourceKey<Recipe<?>> identifier, Recipe<?> recipe, @Nullable AdvancementHolder advancementEntry) {
 				FabricDataGenHelper.addConditions(recipe, conditions);
 				exporter.accept(identifier, recipe, advancementEntry);
 			}
 
 			public Advancement.Builder advancement() {
 				return exporter.advancement();
+			}
+
+			@Override
+			public void includeRootAdvancement() {
+				exporter.includeRootAdvancement();
 			}
 		};
 	}

@@ -3,7 +3,7 @@ package net.p3pp3rf1y.sophisticatedcore.crafting;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.crafting.Recipe;
 
 import javax.annotation.Nullable;
@@ -25,10 +25,15 @@ public class HoldingRecipeOutput implements RecipeOutput {
 	}
 
 	@Override
-	public void accept(ResourceLocation id, Recipe<?> recipe, @org.jetbrains.annotations.Nullable AdvancementHolder advancement) {
+	public void accept(ResourceKey<Recipe<?>> id, Recipe<?> recipe, @org.jetbrains.annotations.Nullable AdvancementHolder advancement) {
 		this.recipe = recipe;
 		this.advancementHolder = advancement;
 		//this.conditions = conditions;
+	}
+
+	@Override
+	public void includeRootAdvancement() {
+		// The wrapped recipe output owns root advancement generation.
 	}
 
 	public Recipe<?> getRecipe() {

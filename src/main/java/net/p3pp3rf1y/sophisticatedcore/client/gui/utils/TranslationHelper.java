@@ -7,8 +7,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.Item;
 import net.p3pp3rf1y.sophisticatedcore.SophisticatedCore;
 import net.p3pp3rf1y.sophisticatedcore.util.RegistryHelper;
+import org.jspecify.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +21,7 @@ public class TranslationHelper {
 	public static final TranslationHelper INSTANCE = new TranslationHelper(SophisticatedCore.MOD_ID);
 
 	private final String guiPrefix;
+	private final String configPrefix;
 	private final String guiUpgradePrefix;
 	private final String guiSettingsPrefix;
 	private final String guiStatusPrefix;
@@ -34,7 +35,8 @@ public class TranslationHelper {
 
 	public TranslationHelper(String modId) {
 		guiPrefix = "gui." + modId + ".";
-		keybindPrefix = "keybind." + modId + ".";
+		configPrefix = modId + ".configuration.";
+		keybindPrefix = "key." + modId + ".";
 		itemUpgradePrefix = "item." + modId + ".";
 		blockPrefix = "block." + modId + ".";
 		upgradeGroupPrefix = "upgrade_group." + modId + ".";
@@ -156,6 +158,10 @@ public class TranslationHelper {
 
 	public String translGui(String guiTranslateKey) {
 		return guiPrefix + guiTranslateKey;
+	}
+
+	public String translConfig(String configKey) {
+		return configPrefix + configKey;
 	}
 
 	public String translGuiTooltip(String guiTranslateKey) {

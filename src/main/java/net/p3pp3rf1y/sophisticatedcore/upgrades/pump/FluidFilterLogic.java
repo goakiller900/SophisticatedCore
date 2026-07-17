@@ -1,7 +1,7 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades.pump;
 
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
-import io.github.fabricators_of_create.porting_lib.transfer.fluid.SimpleFluidContent;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.SimpleFluidContent;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
 import net.p3pp3rf1y.sophisticatedcore.init.ModCoreDataComponents;

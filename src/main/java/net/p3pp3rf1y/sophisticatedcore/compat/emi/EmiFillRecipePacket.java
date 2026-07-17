@@ -10,7 +10,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.p3pp3rf1y.sophisticatedcore.SophisticatedCore;
@@ -19,7 +19,7 @@ import net.p3pp3rf1y.sophisticatedcore.common.gui.StorageContainerMenuBase;
 import java.util.List;
 
 public record EmiFillRecipePacket(int syncId, int action, List<Integer> slots, List<Integer> crafting, int output, List<ItemStack> stacks) implements CustomPacketPayload {
-	public static final Type<EmiFillRecipePacket> TYPE = new Type<>(SophisticatedCore.getRL("emi_fill_recipe"));
+	public static final Type<EmiFillRecipePacket> TYPE = new Type<>(SophisticatedCore.getIdentifier("emi_fill_recipe"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, EmiFillRecipePacket> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.INT, EmiFillRecipePacket::syncId,
 			ByteBufCodecs.INT, EmiFillRecipePacket::action,
@@ -103,9 +103,9 @@ public record EmiFillRecipePacket(int syncId, int action, List<Integer> slots, L
 				}
 				if (output != null) {
 					if (payload.action == 1) {
-						handler.clicked(output.index, 0, ClickType.PICKUP, player);
+						handler.clicked(output.index, 0, ContainerInput.PICKUP, player);
 					} else if (payload.action == 2) {
-						handler.clicked(output.index, 0, ClickType.QUICK_MOVE, player);
+						handler.clicked(output.index, 0, ContainerInput.QUICK_MOVE, player);
 					}
 				}
 			} finally {

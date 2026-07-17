@@ -13,7 +13,7 @@ import net.p3pp3rf1y.sophisticatedcore.util.StreamCodecHelper;
 import javax.annotation.Nullable;
 
 public record SyncContainerClientDataPayload(@Nullable CompoundTag data) implements CustomPacketPayload {
-	public static final Type<SyncContainerClientDataPayload> TYPE = new Type<>(SophisticatedCore.getRL("sync_container_client_data"));
+	public static final Type<SyncContainerClientDataPayload> TYPE = new Type<>(SophisticatedCore.getIdentifier("sync_container_client_data"));
 	public static final StreamCodec<ByteBuf, SyncContainerClientDataPayload> STREAM_CODEC = StreamCodec.composite(
 			StreamCodecHelper.ofNullable(ByteBufCodecs.COMPOUND_TAG),
 			SyncContainerClientDataPayload::data,

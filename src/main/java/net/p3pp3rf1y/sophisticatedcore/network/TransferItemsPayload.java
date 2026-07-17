@@ -2,11 +2,11 @@ package net.p3pp3rf1y.sophisticatedcore.network;
 
 import io.netty.buffer.ByteBuf;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.fabricmc.fabric.impl.transfer.item.InventoryStorageImpl;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -24,13 +24,12 @@ import net.p3pp3rf1y.sophisticatedcore.settings.memory.MemorySettingsCategory;
 import net.p3pp3rf1y.sophisticatedcore.util.InventoryHelper;
 
 import javax.annotation.Nonnull;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 public record TransferItemsPayload(boolean transferToInventory,
 								   boolean filterByContents) implements CustomPacketPayload {
-	public static final CustomPacketPayload.Type<TransferItemsPayload> TYPE = new CustomPacketPayload.Type<>(SophisticatedCore.getRL("transfer_items"));
+	public static final CustomPacketPayload.Type<TransferItemsPayload> TYPE = new CustomPacketPayload.Type<>(SophisticatedCore.getIdentifier("transfer_items"));
 	public static final StreamCodec<ByteBuf, TransferItemsPayload> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.BOOL,
 			TransferItemsPayload::transferToInventory,
@@ -92,7 +91,7 @@ public record TransferItemsPayload(boolean transferToInventory,
 		private final Inventory inventoryPlayer;
 
 		public PlayerMainInvWithoutHotbarWrapper(Inventory inv) {
-			super(inv, 9, inv.items.size());
+			super(inv, 9, inv.getContainerSize());
 			this.inventoryPlayer = inv;
 		}
 
@@ -102,7 +101,7 @@ public record TransferItemsPayload(boolean transferToInventory,
 			if (rest.getCount() != stack.getCount()) {
 				ItemStack inSlot = this.getStackInSlot(slot);
 				if (!inSlot.isEmpty()) {
-					if (this.getInventoryPlayer().player.level().isClientSide) {
+					if (this.getInventoryPlayer().player.level().isClientSide()) {
 						inSlot.setPopTime(5);
 					} else if (this.getInventoryPlayer().player instanceof ServerPlayer) {
 						this.getInventoryPlayer().player.containerMenu.broadcastChanges();
@@ -118,7 +117,7 @@ public record TransferItemsPayload(boolean transferToInventory,
 			if (inserted != maxAmount) {
 				ItemStack inSlot = this.getStackInSlot(slot);
 				if (!inSlot.isEmpty()) {
-					if (this.getInventoryPlayer().player.level().isClientSide) {
+					if (this.getInventoryPlayer().player.level().isClientSide()) {
 						inSlot.setPopTime(5);
 					} else if (this.getInventoryPlayer().player instanceof ServerPlayer) {
 						this.getInventoryPlayer().player.containerMenu.broadcastChanges();
@@ -132,7 +131,7 @@ public record TransferItemsPayload(boolean transferToInventory,
 		public long insert(ItemVariant resource, long maxAmount, TransactionContext transaction) {
 			long inserted = super.insert(resource, maxAmount, transaction);
 			if (inserted != maxAmount) {
-				if (this.getInventoryPlayer().player.level().isClientSide) {
+				if (this.getInventoryPlayer().player.level().isClientSide()) {
 					// resource.toStack((int) (maxAmount - inserted)).setPopTime(5);
 				} else if (this.getInventoryPlayer().player instanceof ServerPlayer) {
 					this.getInventoryPlayer().player.containerMenu.broadcastChanges();
@@ -264,7 +263,7 @@ public record TransferItemsPayload(boolean transferToInventory,
 		private final Inventory inventoryPlayer;
 
 		public PlayerMainInvWrapper(Inventory inv) {
-			super(inv, 0, inv.items.size());
+			super(inv, 0, inv.getContainerSize());
 			this.inventoryPlayer = inv;
 		}
 
@@ -272,7 +271,7 @@ public record TransferItemsPayload(boolean transferToInventory,
 		public long insert(ItemVariant resource, long maxAmount, TransactionContext transaction) {
 			long inserted = super.insert(resource, maxAmount, transaction);
 			if (inserted != maxAmount) {
-				if (this.getInventoryPlayer().player.level().isClientSide) {
+				if (this.getInventoryPlayer().player.level().isClientSide()) {
 					// resource.toStack((int) (maxAmount - inserted)).setPopTime(5);
 				} else if (this.getInventoryPlayer().player instanceof ServerPlayer) {
 					this.getInventoryPlayer().player.containerMenu.broadcastChanges();
@@ -288,26 +287,28 @@ public record TransferItemsPayload(boolean transferToInventory,
 	}
 
 	private static class RangedWrapper implements IItemHandlerSimpleInserter {
-		private final InventoryStorageImpl inventoryStorage;
+		private final List<SingleSlotStorage<ItemVariant>> slots;
+		private final CombinedStorage<ItemVariant, SingleSlotStorage<ItemVariant>> storage;
 
 		public RangedWrapper(Inventory inv, int start, int end) {
-			this.inventoryStorage = (InventoryStorageImpl) InventoryStorage.of(inv, null);
-			this.inventoryStorage.parts = Collections.unmodifiableList(inventoryStorage.parts.subList(start, end));
+			ContainerStorage inventoryStorage = ContainerStorage.of(inv, null);
+			this.slots = List.copyOf(inventoryStorage.getSlots().subList(start, end));
+			this.storage = new CombinedStorage<>(slots);
 		}
 
 		@Override
 		public int getSlotCount() {
-			return inventoryStorage.getSlotCount();
+			return slots.size();
 		}
 
 		@Override
 		public SingleSlotStorage<ItemVariant> getSlot(int slot) {
-			return inventoryStorage.getSlot(slot);
+			return slots.get(slot);
 		}
 
 		@Override
 		public List<SingleSlotStorage<ItemVariant>> getSlots() {
-			return inventoryStorage.parts;
+			return slots;
 		}
 
 		@Override
@@ -329,12 +330,12 @@ public record TransferItemsPayload(boolean transferToInventory,
 
 		@Override
 		public long insert(ItemVariant resource, long maxAmount, TransactionContext transaction) {
-			return inventoryStorage.insert(resource, maxAmount, transaction);
+			return storage.insert(resource, maxAmount, transaction);
 		}
 
 		@Override
 		public long extract(ItemVariant resource, long maxAmount, TransactionContext transaction) {
-			return inventoryStorage.extract(resource, maxAmount, transaction);
+			return storage.extract(resource, maxAmount, transaction);
 		}
 	}
 }

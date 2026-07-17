@@ -156,7 +156,7 @@ class InventoryPartitionerTest {
 
 		Optional<SlotRange> firstSpace = partitioner.getFirstSpace(9);
 		Assertions.assertTrue(firstSpace.isPresent());
-		Assertions.assertEquals(slots, firstSpace.get().numberOfSlots());
+		Assertions.assertEquals(slots, firstSpace.get().size());
 		Assertions.assertEquals(0, firstSpace.get().firstSlot());
 	}
 }

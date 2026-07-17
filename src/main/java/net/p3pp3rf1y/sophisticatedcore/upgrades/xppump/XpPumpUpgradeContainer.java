@@ -101,17 +101,17 @@ public class XpPumpUpgradeContainer extends UpgradeContainerBase<XpPumpUpgradeWr
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains(DATA_DIRECTION)) {
-			setDirection(AutomationDirection.fromName(data.getString(DATA_DIRECTION)));
+			setDirection(AutomationDirection.fromName(data.getStringOr(DATA_DIRECTION, "")));
 		} else if (data.contains(DATA_LEVEL)) {
-			setLevel(data.getInt(DATA_LEVEL));
+			setLevel(data.getIntOr(DATA_LEVEL, 0));
 		} else if (data.contains(DATA_LEVELS_TO_STORE)) {
-			setLevelsToStore(data.getInt(DATA_LEVELS_TO_STORE));
+			setLevelsToStore(data.getIntOr(DATA_LEVELS_TO_STORE, 0));
 		} else if (data.contains(DATA_LEVELS_TO_TAKE)) {
-			setLevelsToTake(data.getInt(DATA_LEVELS_TO_TAKE));
+			setLevelsToTake(data.getIntOr(DATA_LEVELS_TO_TAKE, 0));
 		} else if (data.contains(DATA_MEND_ITEMS)) {
-			setMendItems(data.getBoolean(DATA_MEND_ITEMS));
+			setMendItems(data.getBooleanOr(DATA_MEND_ITEMS, false));
 		} else if (data.contains(DATA_ACTION)) {
-			switch (data.getString(DATA_ACTION)) {
+			switch (data.getStringOr(DATA_ACTION, "")) {
 				case ACTION_TAKE_LEVELS -> upgradeWrapper.giveLevelsToPlayer(player);
 				case ACTION_STORE_LEVELS_FROM_PLAYER -> upgradeWrapper.takeLevelsFromPlayer(player);
 				case ACTION_TAKE_ALL_LEVELS -> upgradeWrapper.giveAllExperienceToPlayer(player);

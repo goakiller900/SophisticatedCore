@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.client.gui;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -25,12 +25,16 @@ public abstract class SettingsTabBase<T extends AbstractContainerScreen<?>> exte
 	protected final T screen;
 	protected Dimension openTabDimension = new Dimension(0, 0);
 	protected boolean isOpen = false;
-	private Runnable onOpen = () -> {};
-	private Runnable onClose = () -> {};
+	private Runnable onOpen = () -> {
+	};
+	private Runnable onClose = () -> {
+	};
 	private final List<WidgetBase> hideableChildren = new ArrayList<>();
 	private final List<Component> openTooltip;
+	private Label titleLabel;
 
-	protected SettingsTabBase(Position position, T screen, Component tabLabel, List<Component> tooltip, List<Component> openTooltip, Function<IntConsumer, ButtonBase> getTabButton) {
+	protected SettingsTabBase(Position position, T screen, Component tabLabel, List<Component> tooltip, List<Component> openTooltip,
+			Function<IntConsumer, ButtonBase> getTabButton) {
 		super(position, tooltip, getTabButton);
 		this.screen = screen;
 		this.openTooltip = openTooltip;
@@ -38,7 +42,7 @@ public abstract class SettingsTabBase<T extends AbstractContainerScreen<?>> exte
 	}
 
 	private void addLabel(Component tabLabel) {
-		addHideableChild(new Label(new Position(x + 20, y + 8), tabLabel));
+		titleLabel = addHideableChildWithoutSizing(new Label(new Position(x + 20, y + 8), tabLabel, () -> Math.max(0, getWidth() - 20 - RIGHT_BORDER_WIDTH)));
 	}
 
 	protected SettingsTabBase(Position position, T screen, Component tabLabel, Component tooltip, Function<IntConsumer, ButtonBase> getTabButton) {
@@ -54,10 +58,16 @@ public abstract class SettingsTabBase<T extends AbstractContainerScreen<?>> exte
 		return widget;
 	}
 
+	protected <U extends WidgetBase> U addHideableChildWithoutSizing(U widget) {
+		hideableChildren.add(widget);
+		return widget;
+	}
+
 	private <U extends WidgetBase> void updateOpenTabDimension(U widget) {
 		int widgetMaxWidthExtension = widget.getX() + widget.getWidth() + RIGHT_BORDER_WIDTH - x;
 		int widgetMaxHeightExtension = widget.getY() + widget.getHeight() + BOTTOM_BORDER_HEIGHT - y;
-		openTabDimension = new Dimension(Math.max(openTabDimension.width(), widgetMaxWidthExtension), Math.max(openTabDimension.height(), widgetMaxHeightExtension));
+		openTabDimension = new Dimension(Math.max(openTabDimension.width(), widgetMaxWidthExtension),
+				Math.max(openTabDimension.height(), widgetMaxHeightExtension));
 	}
 
 	public void setHandlers(Runnable onOpen, Runnable onClose, BooleanSupplier shouldRender, BooleanSupplier shouldShowTooltip) {
@@ -72,10 +82,13 @@ public abstract class SettingsTabBase<T extends AbstractContainerScreen<?>> exte
 	}
 
 	@Override
-	public void renderTooltip(Screen screen, GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		super.renderTooltip(screen, guiGraphics, mouseX, mouseY);
+	public void extractTooltip(Screen screen, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+		super.extractTooltip(screen, guiGraphics, mouseX, mouseY);
+		if (isOpen && titleLabel != null) {
+			titleLabel.extractTooltip(screen, guiGraphics, mouseX, mouseY);
+		}
 		if (!openTooltip.isEmpty() && isOpenTooltipVisible(mouseX, mouseY)) {
-			guiGraphics.renderTooltip(screen.font, openTooltip, Optional.empty(), mouseX, mouseY);
+			guiGraphics.setTooltipForNextFrame(screen.getFont(), openTooltip, Optional.empty(), mouseX, mouseY);
 		}
 	}
 
@@ -89,7 +102,7 @@ public abstract class SettingsTabBase<T extends AbstractContainerScreen<?>> exte
 	}
 
 	protected void onTabOpen() {
-		setWidth(openTabDimension.width());
+		setWidth(Math.max(openTabDimension.width(), DEFAULT_WIDTH));
 		setHeight(openTabDimension.height());
 
 		hideableChildren.forEach(this::addChild);

@@ -10,6 +10,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
@@ -25,17 +26,21 @@ public class MinecraftMixin {
 	@Nullable
 	public HitResult hitResult;
 
+	@Shadow
+	@Final
+	public ParticleEngine particleEngine;
+
     @WrapOperation(
 			method = "continueAttack",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/client/particle/ParticleEngine;crack(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)V"
+					target = "Lnet/minecraft/client/multiplayer/ClientLevel;addBreakingBlockEffect(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)V"
 			)
 	)
-    private void sophisticatedcore$addBlockHitEffects(ParticleEngine instance, BlockPos pos, Direction side, Operation<Void> original) {
-        BlockState state = level.getBlockState(pos);
-        if (!state.sophisticatedCore_addHitEffects(level, this.hitResult, instance)) {
-            original.call(instance, pos, side);
-        }
+    private void sophisticatedcore$addBlockHitEffects(ClientLevel instance, BlockPos pos, Direction side, Operation<Void> original) {
+		BlockState state = instance.getBlockState(pos);
+		if (!state.sophisticatedCore_addHitEffects(instance, this.hitResult, particleEngine)) {
+			original.call(instance, pos, side);
+		}
     }
 }

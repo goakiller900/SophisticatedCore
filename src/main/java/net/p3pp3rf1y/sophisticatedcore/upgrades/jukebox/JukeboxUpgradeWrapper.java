@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades.jukebox;
 
-import io.github.fabricators_of_create.porting_lib.transfer.item.SlottedStackStorage;
+import net.p3pp3rf1y.sophisticatedcore.inventory.SlottedStackStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
@@ -138,7 +138,7 @@ public class JukeboxUpgradeWrapper extends UpgradeWrapperBase<JukeboxUpgradeWrap
 	}
 
 	public Optional<Holder<JukeboxSong>> getJukeboxSongHolder(Level level) {
-		return JukeboxSong.fromStack(level.registryAccess(), getDisc());
+		return JukeboxSong.fromStack(getDisc());
 	}
 
 	private void onDiscFinished() {

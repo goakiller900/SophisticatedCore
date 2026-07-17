@@ -19,7 +19,7 @@ import java.util.Map;
 
 public record SyncTemplateSettingsPayload(Map<Integer, CompoundTag> playerTemplates,
 										  Map<String, CompoundTag> playerNamedTemplates) implements CustomPacketPayload {
-	public static final Type<SyncTemplateSettingsPayload> TYPE = new Type<>(SophisticatedCore.getRL("sync_template_settings"));
+	public static final Type<SyncTemplateSettingsPayload> TYPE = new Type<>(SophisticatedCore.getIdentifier("sync_template_settings"));
 	public static final StreamCodec<ByteBuf, SyncTemplateSettingsPayload> STREAM_CODEC = StreamCodec.composite(
 			StreamCodecHelper.ofMap(ByteBufCodecs.INT, ByteBufCodecs.COMPOUND_TAG, HashMap::new),
 			SyncTemplateSettingsPayload::playerTemplates,

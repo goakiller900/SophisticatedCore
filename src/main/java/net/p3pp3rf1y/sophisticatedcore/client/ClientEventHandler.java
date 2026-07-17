@@ -1,21 +1,22 @@
 package net.p3pp3rf1y.sophisticatedcore.client;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
-import net.fabricmc.fabric.api.client.render.fluid.v1.SimpleFluidRenderHandler;
+import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderingRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.PictureInPictureRendererRegistry;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLevelEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.renderer.block.FluidModel;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
@@ -25,9 +26,11 @@ import net.p3pp3rf1y.sophisticatedcore.SophisticatedCore;
 import net.p3pp3rf1y.sophisticatedcore.api.IStashStorageItem;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.TranslationHelper;
 import net.p3pp3rf1y.sophisticatedcore.client.init.ModParticles;
+import net.p3pp3rf1y.sophisticatedcore.client.render.ItemDisplayPreviewRenderer;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.StorageContainerMenuBase;
 import net.p3pp3rf1y.sophisticatedcore.event.client.ClientRecipesUpdated;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.jukebox.StorageSoundHandler;
+import net.p3pp3rf1y.sophisticatedcore.inventory.ItemStackKey;
 import net.p3pp3rf1y.sophisticatedcore.util.RecipeHelper;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,8 +50,14 @@ public class ClientEventHandler implements ClientModInitializer {
         ModParticles.registerFactories();
 		registerFluidClientExtension();
 
-        ServerWorldEvents.UNLOAD.register(StorageSoundHandler::onWorldUnload);
-		ClientTickEvents.END_WORLD_TICK.register(StorageSoundHandler::tick);
+		ServerLevelEvents.UNLOAD.register(StorageSoundHandler::onWorldUnload);
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			if (client.level != null) {
+				StorageSoundHandler.tick(client.level);
+			}
+			ItemStackKey.clearCacheOnTickEnd();
+		});
+		PictureInPictureRendererRegistry.register(context -> new ItemDisplayPreviewRenderer());
 
         ClientPlayConnectionEvents.JOIN.register(ClientEventHandler::onPlayerJoinServer);
 		ClientRecipesUpdated.EVENT.register(RecipeHelper::onRecipesUpdated);
@@ -58,13 +67,13 @@ public class ClientEventHandler implements ClientModInitializer {
                 return;
             }
 
-			ScreenEvents.afterRender(screen).register(ClientEventHandler::onDrawScreen);
+			ScreenEvents.afterExtract(screen).register(ClientEventHandler::onDrawScreen);
 		});
 	}
 
-	private static void onDrawScreen(Screen screen, GuiGraphics guiGraphics, int mouseX, int mouseY, float tickDelta) {
+	private static void onDrawScreen(Screen screen, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float tickDelta) {
 		Minecraft mc = Minecraft.getInstance();
-		Screen gui = mc.screen;
+		Screen gui = screen;
 		if (!(gui instanceof AbstractContainerScreen<?> containerGui) || gui instanceof CreativeModeInventoryScreen || mc.player == null) {
 			return;
 		}
@@ -86,7 +95,7 @@ public class ClientEventHandler implements ClientModInitializer {
 				}
 
 				if (s == under) {
-					renderSpecialTooltip(mc, guiGraphics, mouseX, mouseY, stashResultAndTooltip.get());
+					renderSpecialTooltip(mc, screen, guiGraphics, mouseX, mouseY, stashResultAndTooltip.get());
 				} else {
 					renderStashSign(mc, containerGui, guiGraphics, s, stack, stashResultAndTooltip.get().stashResult());
 				}
@@ -94,31 +103,22 @@ public class ClientEventHandler implements ClientModInitializer {
 		}
 	}
 
-	private static void renderStashSign(Minecraft mc, AbstractContainerScreen<?> containerGui, GuiGraphics guiGraphics, Slot s, ItemStack stack, IStashStorageItem.StashResult stashResult) {
+	private static void renderStashSign(Minecraft mc, AbstractContainerScreen<?> containerGui, GuiGraphicsExtractor guiGraphics, Slot s, ItemStack stack, IStashStorageItem.StashResult stashResult) {
 		int x = containerGui.sophisticatedCore_getGuiLeft() + s.x;
 		int y = containerGui.sophisticatedCore_getGuiTop() + s.y;
 
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
-		// Because of trinkets we need to increase this from the original 300
-		// Trinkets uses 310, so 330 was chosen as 320 was not enough as it cut the plus sign in half
-		poseStack.translate(0, 0, 330);
-
-		int color = stashResult == IStashStorageItem.StashResult.MATCH_AND_SPACE ? ChatFormatting.GREEN.getColor() : 0xFFFF00;
+		int color = 0xFF000000 | (stashResult == IStashStorageItem.StashResult.MATCH_AND_SPACE ? 0x55FF55 : 0xFFFF55);
 		if (stack.getItem() instanceof IStashStorageItem) {
-			guiGraphics.drawString(mc.font, "+", x + 10, y + 8, color);
+			guiGraphics.text(mc.font, "+", x + 10, y + 8, color);
 		} else {
-			guiGraphics.drawString(mc.font, "-", x + 1, y, color);
+			guiGraphics.text(mc.font, "-", x + 1, y, color);
 		}
-		poseStack.popPose();
 	}
 
-    private static void renderSpecialTooltip(Minecraft mc, GuiGraphics guiGraphics, int x, int y, StashResultAndTooltip stashResultAndTooltip) {
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
-		poseStack.translate(0, 0, 100);
-		guiGraphics.renderTooltip(mc.font, Collections.singletonList(Component.translatable(TranslationHelper.INSTANCE.translItemTooltip("storage") + ".right_click_to_add_to_storage")), stashResultAndTooltip.tooltip(), x, y);
-		poseStack.popPose();
+    private static void renderSpecialTooltip(Minecraft mc, Screen screen, GuiGraphicsExtractor guiGraphics, int x, int y, StashResultAndTooltip stashResultAndTooltip) {
+		net.p3pp3rf1y.sophisticatedcore.client.gui.utils.GuiHelper.extractTooltip(screen, guiGraphics, ItemStack.EMPTY,
+				Collections.singletonList(Component.translatable(TranslationHelper.INSTANCE.translItemTooltip("storage") + ".right_click_to_add_to_storage")),
+				stashResultAndTooltip.tooltip(), x, y);
 	}
 
 	private static Optional<StashResultAndTooltip> getStashResultAndTooltip(ItemStack inInventory, ItemStack held) {
@@ -151,9 +151,9 @@ public class ClientEventHandler implements ClientModInitializer {
 	}
 
 	private static void registerFluidClientExtension() {
-		FluidRenderHandlerRegistry.INSTANCE.register(XP_STILL.get(), XP_FLOWING.get(), new SimpleFluidRenderHandler(
-                SophisticatedCore.getRL("block/xp_still"),
-                SophisticatedCore.getRL("block/xp_flowing")
-        ));
+		FluidModel.Unbaked model = new FluidModel.Unbaked(
+				new Material(SophisticatedCore.getIdentifier("block/xp_still")),
+				new Material(SophisticatedCore.getIdentifier("block/xp_flowing")), null, null);
+		FluidRenderingRegistry.register(XP_STILL.get(), XP_FLOWING.get(), model);
 	}
 }

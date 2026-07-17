@@ -2,13 +2,13 @@ package net.p3pp3rf1y.sophisticatedcore.upgrades.crafting;
 
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.StackedContents;
+import net.minecraft.world.entity.player.StackedItemContents;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import io.github.fabricators_of_create.porting_lib.transfer.item.SlottedStackStorage;
+import net.p3pp3rf1y.sophisticatedcore.inventory.SlottedStackStorage;
 import net.p3pp3rf1y.sophisticatedcore.util.InventoryHelper;
 
 import java.util.ArrayList;
@@ -102,7 +102,7 @@ public class CraftingItemHandler extends TransientCraftingContainer {
 	}
 
 	@Override
-	public void fillStackedContents(StackedContents helper) {
+	public void fillStackedContents(StackedItemContents helper) {
 		InventoryHelper.iterate(supplyInventory.get(), (slot, stack) -> helper.accountSimpleStack(stack));
 	}
 

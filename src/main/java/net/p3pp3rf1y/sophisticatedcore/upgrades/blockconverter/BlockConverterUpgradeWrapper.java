@@ -1,22 +1,25 @@
-package net.p3pp3rf1y.sophisticatedcore.upgrades.stonecutter;
+package net.p3pp3rf1y.sophisticatedcore.upgrades.blockconverter;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.ItemStack;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
-import io.github.fabricators_of_create.porting_lib.transfer.item.SlottedStackStorage;
+import net.minecraft.world.item.crafting.Recipe;
 import net.p3pp3rf1y.sophisticatedcore.api.IStorageWrapper;
 import net.p3pp3rf1y.sophisticatedcore.init.ModCoreDataComponents;
+import net.p3pp3rf1y.sophisticatedcore.inventory.ItemStackHandler;
+import net.p3pp3rf1y.sophisticatedcore.inventory.SlottedStackStorage;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.UpgradeWrapperBase;
+import net.p3pp3rf1y.sophisticatedcore.util.InventoryHelper;
 import net.p3pp3rf1y.sophisticatedcore.util.SimpleItemContent;
+import org.jspecify.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class StonecutterUpgradeWrapper extends UpgradeWrapperBase<StonecutterUpgradeWrapper, StonecutterUpgradeItem> {
+public abstract class BlockConverterUpgradeWrapper<U extends BlockConverterUpgradeItem<U, W>, W extends BlockConverterUpgradeWrapper<U, W>>
+		extends UpgradeWrapperBase<W, U> {
 	private final SlottedStackStorage inputInventory;
 
-	protected StonecutterUpgradeWrapper(IStorageWrapper storageWrapper, ItemStack upgrade, Consumer<ItemStack> upgradeSaveHandler) {
+	protected BlockConverterUpgradeWrapper(IStorageWrapper storageWrapper, ItemStack upgrade, Consumer<ItemStack> upgradeSaveHandler) {
 		super(storageWrapper, upgrade, upgradeSaveHandler);
 
 		inputInventory = new ItemStackHandler(1) {
@@ -24,7 +27,12 @@ public class StonecutterUpgradeWrapper extends UpgradeWrapperBase<StonecutterUpg
 			protected void onContentsChanged(int slot) {
 				super.onContentsChanged(slot);
 				if (slot == 0) {
-					upgrade.sophisticatedCore_set(ModCoreDataComponents.INPUT_ITEM, SimpleItemContent.copyOf(getStackInSlot(0)));
+					ItemStack inputStack = getStackInSlot(0);
+					if (inputStack.isEmpty()) {
+						upgrade.sophisticatedCore_remove(ModCoreDataComponents.INPUT_ITEM);
+					} else {
+						upgrade.sophisticatedCore_set(ModCoreDataComponents.INPUT_ITEM, SimpleItemContent.copyOf(inputStack));
+					}
 				}
 				save();
 			}
@@ -36,7 +44,7 @@ public class StonecutterUpgradeWrapper extends UpgradeWrapperBase<StonecutterUpg
 		return inputInventory;
 	}
 
-	public void setRecipeId(@Nullable ResourceLocation recipeId) {
+	public void setRecipeId(@Nullable ResourceKey<Recipe<?>> recipeId) {
 		if (recipeId == null) {
 			upgrade.sophisticatedCore_remove(ModCoreDataComponents.RECIPE_ID);
 			return;
@@ -45,7 +53,7 @@ public class StonecutterUpgradeWrapper extends UpgradeWrapperBase<StonecutterUpg
 		save();
 	}
 
-	public Optional<ResourceLocation> getRecipeId() {
+	public Optional<ResourceKey<Recipe<?>>> getRecipeId() {
 		return Optional.ofNullable(upgrade.sophisticatedCore_get(ModCoreDataComponents.RECIPE_ID));
 	}
 
@@ -61,5 +69,18 @@ public class StonecutterUpgradeWrapper extends UpgradeWrapperBase<StonecutterUpg
 	public void setShiftClickIntoStorage(boolean shiftClickIntoStorage) {
 		upgrade.sophisticatedCore_set(ModCoreDataComponents.SHIFT_CLICK_INTO_STORAGE, shiftClickIntoStorage);
 		save();
+	}
+
+	public boolean shouldRefillInput() {
+		return upgrade.sophisticatedCore_getOrDefault(ModCoreDataComponents.REFILL_INPUT, false);
+	}
+
+	public void setRefillInput(boolean refillInput) {
+		upgrade.sophisticatedCore_set(ModCoreDataComponents.REFILL_INPUT, refillInput);
+		save();
+	}
+
+	public ItemStack extractFromStorage(ItemStack stack, boolean simulate) {
+		return InventoryHelper.extractFromInventory(stack, storageWrapper.getInventoryHandler(), simulate);
 	}
 }

@@ -4,10 +4,13 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.p3pp3rf1y.sophisticatedcore.extensions.entity.SophisticatedEntity;
 import net.p3pp3rf1y.sophisticatedcore.util.MixinHelper;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,7 +19,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Collection;
 
@@ -32,13 +34,13 @@ public class EntityMixin implements SophisticatedEntity {
 	private Collection<ItemEntity> sophisticatedCore$captureDrops = null;
 
 	@WrapWithCondition(
-			method = "spawnAtLocation(Lnet/minecraft/world/item/ItemStack;F)Lnet/minecraft/world/entity/item/ItemEntity;",
+			method = "spawnAtLocation(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/entity/item/ItemEntity;",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z"
+					target = "Lnet/minecraft/server/level/ServerLevel;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z"
 			)
 	)
-	public boolean sophisticatedCore$captureDrops(Level level, Entity entity) {
+	private boolean sophisticatedCore$captureDrops(ServerLevel level, Entity entity) {
 		if (sophisticatedCaptureDrops() != null && entity instanceof ItemEntity item) {
 			sophisticatedCaptureDrops().add(item);
 			return false;
@@ -78,17 +80,15 @@ public class EntityMixin implements SophisticatedEntity {
 		return this.sophisticatedCore$customData;
 	}
 
-	@Inject(method = "saveWithoutId", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;addAdditionalSaveData(Lnet/minecraft/nbt/CompoundTag;)V"))
-	public void sophisticatedCore$saveAdditionalData(CompoundTag compound, CallbackInfoReturnable<CompoundTag> cir) {
+	@Inject(method = "saveWithoutId", at = @At("HEAD"))
+	public void sophisticatedCore$saveAdditionalData(ValueOutput output, CallbackInfo ci) {
 		if (this.sophisticatedCore$customData != null && !this.sophisticatedCore$customData.isEmpty()) {
-			compound.put(SOPHISTICATEDCOREDATA_NBT_KEY, this.sophisticatedCore$customData);
+			output.store(SOPHISTICATEDCOREDATA_NBT_KEY, CompoundTag.CODEC, this.sophisticatedCore$customData);
 		}
 	}
 
-	@Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;readAdditionalSaveData(Lnet/minecraft/nbt/CompoundTag;)V"))
-	public void sophisticatedCore$readAdditionalData(CompoundTag compound, CallbackInfo ci) {
-		if (compound.contains(SOPHISTICATEDCOREDATA_NBT_KEY)) {
-			this.sophisticatedCore$customData = compound.getCompound(SOPHISTICATEDCOREDATA_NBT_KEY);
-		}
+	@Inject(method = "load", at = @At("HEAD"))
+	public void sophisticatedCore$readAdditionalData(ValueInput input, CallbackInfo ci) {
+		this.sophisticatedCore$customData = input.read(SOPHISTICATEDCOREDATA_NBT_KEY, CompoundTag.CODEC).orElse(null);
 	}
 }

@@ -1,19 +1,19 @@
 package net.p3pp3rf1y.sophisticatedcore.client.gui;
 
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.inventory.Slot;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Position;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.UpgradeContainerBase;
 
 import java.util.Map;
 
-public class UpgradeSettingsTabControl extends SettingsTabControl<StorageScreenBase<?>, UpgradeSettingsTab<?>> {
+public class UpgradeSettingsTabControl extends SettingsTabControl<StorageScreenBase<?>, UpgradeSettingsTab<?>> implements IForegroundRenderable {
 	public UpgradeSettingsTabControl(Position position, StorageScreenBase<?> screen, String storageSettingsTabTooltip) {
 		super(position);
 		addChild(new StorageSettingsTab(new Position(x, getTopY()), screen, storageSettingsTabTooltip));
 		for (Map.Entry<Integer, UpgradeContainerBase<?, ?>> entry : screen.getMenu().getUpgradeContainers().entrySet()) {
 			addSettingsTab(() -> screen.getMenu().setOpenTabId(entry.getKey()), () -> screen.getMenu().removeOpenTabId(),
-					UpgradeGuiManager.getTab(entry.getValue(), new Position(x, getTopY()), screen))
-					.onAfterInit();
+					UpgradeGuiManager.getTab(entry.getValue(), new Position(x, getTopY()), screen)).onAfterInit();
 		}
 	}
 
@@ -29,5 +29,14 @@ public class UpgradeSettingsTabControl extends SettingsTabControl<StorageScreenB
 
 	public void tick() {
 		children.forEach(Tab::tick);
+	}
+
+	@Override
+	public void extractForeground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		for (Tab child : children) {
+			if (child instanceof IForegroundRenderable renderable) {
+				renderable.extractForeground(guiGraphics, mouseX, mouseY, partialTicks);
+			}
+		}
 	}
 }

@@ -2,6 +2,7 @@ package net.p3pp3rf1y.sophisticatedcore.upgrades.infinity;
 
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.item.ItemStack;
 import net.p3pp3rf1y.sophisticatedcore.inventory.IInventoryPartHandler;
 import net.p3pp3rf1y.sophisticatedcore.inventory.InventoryHandler;
@@ -40,7 +41,7 @@ public abstract class InfinityInventoryPart implements IInventoryPartHandler {
 
 	@Override
 	public boolean isItemValid(int slot, ItemVariant resource, int count, @Nullable Player player, TriPredicate<Integer, ItemVariant, Integer> isItemValidSuper) {
-		return player != null && player.hasPermissions(permissionLevel) && parent.getSlotStack(slot).isEmpty() && isItemValidSuper.test(slot, resource, count);
+		return player != null && hasPermission(player) && parent.getSlotStack(slot).isEmpty() && isItemValidSuper.test(slot, resource, count);
 	}
 
 	@Override
@@ -86,7 +87,12 @@ public abstract class InfinityInventoryPart implements IInventoryPartHandler {
 
 	@Override
 	public int getSlots() {
-		return slotRange.numberOfSlots();
+		return slotRange.size();
+	}
+
+	private boolean hasPermission(Player player) {
+		return permissionLevel <= 0 || player.permissions().hasPermission(permissionLevel == 1 ? Permissions.COMMANDS_MODERATOR
+				: permissionLevel == 2 ? Permissions.COMMANDS_GAMEMASTER : permissionLevel == 3 ? Permissions.COMMANDS_ADMIN : Permissions.COMMANDS_OWNER);
 	}
 
 	public static class Admin extends InfinityInventoryPart {

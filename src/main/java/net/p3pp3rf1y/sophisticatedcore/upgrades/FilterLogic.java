@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades;
 
-import io.github.fabricators_of_create.porting_lib.util.DeferredHolder;
+import net.p3pp3rf1y.sophisticatedcore.util.RegistrySupplier;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 public class FilterLogic {
 	protected final ItemStack upgrade;
 	protected final Consumer<ItemStack> saveHandler;
-	protected final DeferredHolder<DataComponentType<?>, DataComponentType<FilterAttributes>> filterAttributesComponent;
+	protected final RegistrySupplier<DataComponentType<FilterAttributes>> filterAttributesComponent;
 	private final int defaultFilterSlotCount;
 	private final Predicate<ItemStack> isItemValid;
 	@Nullable
@@ -35,11 +35,11 @@ public class FilterLogic {
 	@Nullable
 	private FilterAttributes emptyAttributes = null;
 
-	public FilterLogic(ItemStack upgrade, Consumer<ItemStack> saveHandler, int defaultFilterSlotCount, DeferredHolder<DataComponentType<?>, DataComponentType<FilterAttributes>> filterAttributesComponent) {
+	public FilterLogic(ItemStack upgrade, Consumer<ItemStack> saveHandler, int defaultFilterSlotCount, RegistrySupplier<DataComponentType<FilterAttributes>> filterAttributesComponent) {
 		this(upgrade, saveHandler, defaultFilterSlotCount, s -> true, filterAttributesComponent);
 	}
 
-	public FilterLogic(ItemStack upgrade, Consumer<ItemStack> saveHandler, int defaultFilterSlotCount, Predicate<ItemStack> isItemValid, DeferredHolder<DataComponentType<?>, DataComponentType<FilterAttributes>> filterAttributesComponent) {
+	public FilterLogic(ItemStack upgrade, Consumer<ItemStack> saveHandler, int defaultFilterSlotCount, Predicate<ItemStack> isItemValid, RegistrySupplier<DataComponentType<FilterAttributes>> filterAttributesComponent) {
 		this.upgrade = upgrade;
 		this.saveHandler = saveHandler;
 		this.filterAttributesComponent = filterAttributesComponent;
@@ -84,9 +84,9 @@ public class FilterLogic {
 
 	private boolean isTagMatch(ItemStack stack) {
 		if (shouldMatchAnyTag()) {
-			return anyTagMatches(stack.getTags());
+			return anyTagMatches(stack.typeHolder().tags());
 		}
-		return allTagsMatch(stack.getTags());
+		return allTagsMatch(stack.typeHolder().tags());
 	}
 
 	private boolean allTagsMatch(Stream<TagKey<Item>> tagsStream) {
@@ -110,7 +110,7 @@ public class FilterLogic {
 	}
 
 	protected FilterAttributes getAttributes() {
-		return upgrade.sophisticatedCore_getOrDefault(filterAttributesComponent, getEmptyAttributes());
+		return upgrade.getOrDefault(filterAttributesComponent.get(), getEmptyAttributes());
 	}
 
 	private FilterAttributes getEmptyAttributes() {
@@ -121,7 +121,7 @@ public class FilterLogic {
 	}
 
 	protected void setAttributes(Function<FilterAttributes, FilterAttributes> setter) {
-		upgrade.sophisticatedCore_set(filterAttributesComponent, setter.apply(getAttributes()));
+		upgrade.set(filterAttributesComponent.get(), setter.apply(getAttributes()));
 	}
 
 	public void setAllowByDefault(boolean allowListDefault) {
@@ -235,7 +235,7 @@ public class FilterLogic {
 		save();
 	}
 
-	public DeferredHolder<DataComponentType<?>, DataComponentType<FilterAttributes>> getAttributesComponent() {
+	public RegistrySupplier<DataComponentType<FilterAttributes>> getAttributesComponent() {
 		return filterAttributesComponent;
 	}
 

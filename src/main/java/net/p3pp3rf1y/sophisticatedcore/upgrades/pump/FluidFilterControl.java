@@ -1,13 +1,12 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades.pump;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler;
-import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
+import net.minecraft.world.item.ItemStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.controls.WidgetBase;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Dimension;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.GuiHelper;
@@ -30,40 +29,40 @@ public class FluidFilterControl extends WidgetBase {
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
+	protected void extractBg(GuiGraphicsExtractor guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
 		GuiHelper.renderSlotsBackground(guiGraphics, x, y, container.getNumberOfFluidFilters(), 1);
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+	protected void extractWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		for (int i = 0; i < container.getNumberOfFluidFilters(); i++) {
 			FluidStack fluid = container.getFluid(i);
 			if (!fluid.isEmpty()) {
-				FluidRenderHandler handler = FluidRenderHandlerRegistry.INSTANCE.get(fluid.getFluid());
-				TextureAtlasSprite[] sprites = handler.getFluidSprites(null, null, fluid.getFluid().defaultFluidState());
-				int tint = handler.getFluidColor(null, null,fluid.getFluid().defaultFluidState());
-				GuiHelper.renderTiledFluidTextureAtlas(guiGraphics, sprites[0], tint, x + i * 18 + 1, y + 1, 16);
+				ItemStack bucket = new ItemStack(fluid.getFluid().getBucket());
+				if (!bucket.isEmpty()) {
+					guiGraphics.item(bucket, x + i * 18 + 1, y + 1);
+				}
 			}
 		}
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (!isMouseOver(mouseX, mouseY)) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClicked) {
+		if (!isMouseOver(event.x(), event.y())) {
 			return false;
 		}
 
-		getSlotClicked(mouseX, mouseY).ifPresent(container::slotClick);
+		getSlotClicked(event.x(), event.y()).ifPresent(container::slotClick);
 
 		return true;
 	}
 
 	@Override
-	public void renderTooltip(Screen screen, GuiGraphics guiGraphics, int mouseX, int mouseY) {
+	public void extractTooltip(Screen screen, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
 		getSlotClicked(mouseX, mouseY).ifPresent(slot -> {
 			FluidStack fluid = container.getFluid(slot);
 			if (!fluid.isEmpty()) {
-				GuiHelper.renderTooltip(screen, guiGraphics, List.of(fluid.getHoverName()), mouseX, mouseY);
+				GuiHelper.extractTooltip(screen, guiGraphics, List.of(fluid.getHoverName()), mouseX, mouseY);
 			}
 		});
 	}

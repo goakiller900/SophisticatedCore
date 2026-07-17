@@ -27,7 +27,7 @@ import java.util.Collection;
 @Mixin(value = LivingEntity.class, priority = 500)
 public abstract class LivingEntityMixin extends Entity {
     @Shadow
-    protected int lastHurtByPlayerTime;
+    protected int lastHurtByPlayerMemoryTime;
 
     public LivingEntityMixin(EntityType<?> entityType, Level world) {
         super(entityType, world);
@@ -47,7 +47,7 @@ public abstract class LivingEntityMixin extends Entity {
 	)
     private void sophisticatedcore$dropCapturedDrops(ServerLevel level, DamageSource damageSource, CallbackInfo ci) {
         Collection<ItemEntity> drops = this.sophisticatedCaptureDrops(null);
-        if (!LivingEntityEvents.DROPS.invoker().onLivingEntityDrops(MixinHelper.cast(this), damageSource, drops,lastHurtByPlayerTime > 0))
+        if (!LivingEntityEvents.DROPS.invoker().onLivingEntityDrops(MixinHelper.cast(this), damageSource, drops, lastHurtByPlayerMemoryTime > 0))
             drops.forEach(level::addFreshEntity);
     }
 

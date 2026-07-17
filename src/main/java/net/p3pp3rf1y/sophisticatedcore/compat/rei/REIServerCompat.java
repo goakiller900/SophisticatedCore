@@ -4,7 +4,7 @@ import me.shedaniel.rei.api.common.plugins.REIServerPlugin;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessor;
 import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessorRegistry;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.p3pp3rf1y.sophisticatedcore.SophisticatedCore;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public class REIServerCompat implements REIServerPlugin {
 	@Override
 	public void registerSlotAccessors(SlotAccessorRegistry registry) {
-		registry.register(ResourceLocation.fromNamespaceAndPath(SophisticatedCore.MOD_ID, "storage"),
+		registry.register(Identifier.fromNamespaceAndPath(SophisticatedCore.MOD_ID, "storage"),
 				slotAccessor -> slotAccessor instanceof SophisticatedSlotAccessor,
 				new SlotAccessorRegistry.Serializer() {
 					@Override

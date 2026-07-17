@@ -7,9 +7,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 public interface SophisticatedMutableDataComponentHolder extends DataComponentHolder {
-	<T> @Nullable T sophisticatedCore_set(DataComponentType<? super T> type, @Nullable T value);
+	<T> @Nullable T sophisticatedCore_set(DataComponentType<T> type, @Nullable T value);
 
-	default <T> @Nullable T sophisticatedCore_set(Supplier<? extends DataComponentType<? super T>> componentType, @Nullable T value) {
+	default <T> @Nullable T sophisticatedCore_set(Supplier<? extends DataComponentType<T>> componentType, @Nullable T value) {
 		return this.sophisticatedCore_set(componentType.get(), value);
 	}
 

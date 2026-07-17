@@ -2,7 +2,7 @@ package net.p3pp3rf1y.sophisticatedcore.common;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLevelEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -31,8 +31,8 @@ public class CommonEventHandler {
 
 		UseBlockCallback.EVENT.register(this::onUseBlock);
 
-		ServerWorldEvents.UNLOAD.register(ServerStorageSoundHandler::onWorldUnload);
-		ServerTickEvents.END_WORLD_TICK.register(ServerStorageSoundHandler::tick);
+		ServerLevelEvents.UNLOAD.register(ServerStorageSoundHandler::onWorldUnload);
+		ServerTickEvents.END_LEVEL_TICK.register(ServerStorageSoundHandler::tick);
 	}
 
 	private InteractionResult onUseBlock(Player player, Level level, InteractionHand hand, BlockHitResult hitResult) {

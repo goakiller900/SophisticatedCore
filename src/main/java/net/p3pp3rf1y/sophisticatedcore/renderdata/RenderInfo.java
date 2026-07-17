@@ -7,6 +7,7 @@ import net.p3pp3rf1y.sophisticatedcore.upgrades.IRenderedTankUpgrade;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.cooking.CookingUpgradeRenderData;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.jukebox.JukeboxUpgradeRenderData;
 import net.p3pp3rf1y.sophisticatedcore.util.NBTHelper;
+import net.p3pp3rf1y.sophisticatedcore.util.CodecHelper;
 import net.p3pp3rf1y.sophisticatedcore.util.RegistryHelper;
 
 import javax.annotation.Nullable;
@@ -71,7 +72,7 @@ public abstract class RenderInfo {
 		CompoundTag renderInfo = getRenderInfoTag().orElse(new CompoundTag());
 		ListTag upgradeItemsTag = new ListTag();
 		for (ItemStack upgradeItem : upgradeItems) {
-			upgradeItemsTag.add(RegistryHelper.getRegistryAccess().map(upgradeItem::saveOptional).orElse(new CompoundTag()));
+			upgradeItemsTag.add(RegistryHelper.getRegistryAccess().map(registryAccess -> CodecHelper.encodeItemStack(registryAccess, upgradeItem)).orElse(new CompoundTag()));
 		}
 		renderInfo.put(UPGRADE_ITEMS_TAG, upgradeItemsTag);
 		serializeRenderInfo(renderInfo);
@@ -92,7 +93,7 @@ public abstract class RenderInfo {
 
 	private void serializeUpgradeData(Consumer<CompoundTag> modifyUpgradesTag) {
 		CompoundTag renderInfo = getRenderInfoTag().orElse(new CompoundTag());
-		CompoundTag upgrades = renderInfo.getCompound(UPGRADES_TAG);
+		CompoundTag upgrades = renderInfo.getCompoundOrEmpty(UPGRADES_TAG);
 		modifyUpgradesTag.accept(upgrades);
 		renderInfo.put(UPGRADES_TAG, upgrades);
 		serializeRenderInfo(renderInfo);
@@ -136,17 +137,17 @@ public abstract class RenderInfo {
 	}
 
 	private void deserializeUpgradeItems(CompoundTag renderInfoTag) {
-		ListTag upgradeItemsTag = renderInfoTag.getList(UPGRADE_ITEMS_TAG, Tag.TAG_COMPOUND);
+		ListTag upgradeItemsTag = renderInfoTag.getListOrEmpty(UPGRADE_ITEMS_TAG);
 		upgradeItems.clear();
 		RegistryHelper.getRegistryAccess().ifPresent(registryAccess -> {
 			for (int i = 0; i < upgradeItemsTag.size(); i++) {
-				upgradeItems.add(ItemStack.parseOptional(registryAccess, upgradeItemsTag.getCompound(i)));
+				upgradeItems.add(upgradeItemsTag.getCompound(i).flatMap(tag -> CodecHelper.decodeItemStack(registryAccess, tag)).orElse(ItemStack.EMPTY));
 			}
 		});
 	}
 
 	private void deserializeItemDisplay(CompoundTag renderInfoTag) {
-		itemDisplayRenderInfo = ItemDisplayRenderInfo.deserialize(renderInfoTag.getCompound(ITEM_DISPLAY_TAG));
+		itemDisplayRenderInfo = ItemDisplayRenderInfo.deserialize(renderInfoTag.getCompoundOrEmpty(ITEM_DISPLAY_TAG));
 	}
 
 	protected abstract Optional<CompoundTag> getRenderInfoTag();
@@ -162,11 +163,11 @@ public abstract class RenderInfo {
 	}
 
 	private void deserializeUpgradeData(CompoundTag renderInfoTag) {
-		CompoundTag upgrades = renderInfoTag.getCompound(UPGRADES_TAG);
-		upgrades.getAllKeys().forEach(key -> {
+		CompoundTag upgrades = renderInfoTag.getCompoundOrEmpty(UPGRADES_TAG);
+		upgrades.keySet().forEach(key -> {
 			if (RENDER_DATA_TYPES.containsKey(key)) {
 				UpgradeRenderDataType<?> upgradeRenderDataType = RENDER_DATA_TYPES.get(key);
-				upgradeData.put(upgradeRenderDataType, upgradeRenderDataType.deserialize(upgrades.getCompound(key)));
+				upgradeData.put(upgradeRenderDataType, upgradeRenderDataType.deserialize(upgrades.getCompoundOrEmpty(key)));
 			}
 		});
 	}
@@ -200,10 +201,10 @@ public abstract class RenderInfo {
 	}
 
 	private void deserializeTanks(CompoundTag renderInfoTag) {
-		ListTag tanks = renderInfoTag.getList(TANKS_TAG, Tag.TAG_COMPOUND);
+		ListTag tanks = renderInfoTag.getListOrEmpty(TANKS_TAG);
 		for (int i = 0; i < tanks.size(); i++) {
-			CompoundTag tank = tanks.getCompound(i);
-			tankRenderInfos.put(TankPosition.valueOf(tank.getString(TANK_POSITION_TAG).toUpperCase(Locale.ENGLISH)), IRenderedTankUpgrade.TankRenderInfo.deserialize(tank.getCompound(TANK_INFO_TAG)));
+			CompoundTag tank = tanks.getCompound(i).orElseGet(CompoundTag::new);
+			tankRenderInfos.put(TankPosition.valueOf(tank.getStringOr(TANK_POSITION_TAG, "left").toUpperCase(Locale.ENGLISH)), IRenderedTankUpgrade.TankRenderInfo.deserialize(tank.getCompoundOrEmpty(TANK_INFO_TAG)));
 		}
 	}
 
@@ -215,12 +216,12 @@ public abstract class RenderInfo {
 		CompoundTag tankInfo = tankRenderInfo.serialize();
 
 		CompoundTag renderInfo = getRenderInfoTag().orElse(new CompoundTag());
-		ListTag tanks = renderInfo.getList(TANKS_TAG, Tag.TAG_COMPOUND);
+		ListTag tanks = renderInfo.getListOrEmpty(TANKS_TAG);
 
 		boolean infoSet = false;
 		for (int i = 0; i < tanks.size(); i++) {
-			CompoundTag tank = tanks.getCompound(i);
-			if (tank.getString(TANK_POSITION_TAG).equals(tankPosition.getSerializedName())) {
+			CompoundTag tank = tanks.getCompound(i).orElseGet(CompoundTag::new);
+			if (tank.getStringOr(TANK_POSITION_TAG, "").equals(tankPosition.getSerializedName())) {
 				tank.put(TANK_INFO_TAG, tankInfo);
 				infoSet = true;
 			}
@@ -305,14 +306,14 @@ public abstract class RenderInfo {
 
 		public static ItemDisplayRenderInfo deserialize(CompoundTag tag) {
 			List<Integer> inaccessibleSlots;
-			if (tag.getTagType(INACCESSIBLE_SLOTS_TAG) == Tag.TAG_INT_ARRAY) {
-				inaccessibleSlots = Arrays.stream(tag.getIntArray(INACCESSIBLE_SLOTS_TAG)).boxed().collect(Collectors.toCollection(ArrayList::new));
+			if (tag.get(INACCESSIBLE_SLOTS_TAG) instanceof IntArrayTag) {
+				inaccessibleSlots = Arrays.stream(tag.getIntArray(INACCESSIBLE_SLOTS_TAG).orElseGet(() -> new int[0])).boxed().collect(Collectors.toCollection(ArrayList::new));
 			} else {
-				inaccessibleSlots = NBTHelper.getCollection(tag, INACCESSIBLE_SLOTS_TAG, Tag.TAG_INT, t -> Optional.of(((IntTag) t).getAsInt()), ArrayList::new).orElseGet(ArrayList::new); //TODO remove this legacy support in the future
+				inaccessibleSlots = NBTHelper.<Integer, List<Integer>>getCollection(tag, INACCESSIBLE_SLOTS_TAG, Tag.TAG_INT, t -> Optional.of(((IntTag) t).intValue()), ArrayList::new).orElseGet(ArrayList::new); //TODO remove this legacy support in the future
 			}
-			List<Integer> infiniteSlots = Arrays.stream(tag.getIntArray(INFINITE_SLOTS_TAG)).boxed().collect(Collectors.toCollection(ArrayList::new));
-			List<Integer> slotCounts = Arrays.stream(tag.getIntArray(SLOT_COUNTS_TAG)).boxed().collect(Collectors.toCollection(ArrayList::new));
-			List<Float> slotFillRatios = NBTHelper.getCollection(tag, SLOT_FILL_RATIOS_TAG, Tag.TAG_FLOAT, t -> Optional.of(((FloatTag) t).getAsFloat()), ArrayList::new).orElseGet(ArrayList::new);
+			List<Integer> infiniteSlots = Arrays.stream(tag.getIntArray(INFINITE_SLOTS_TAG).orElseGet(() -> new int[0])).boxed().collect(Collectors.toCollection(ArrayList::new));
+			List<Integer> slotCounts = Arrays.stream(tag.getIntArray(SLOT_COUNTS_TAG).orElseGet(() -> new int[0])).boxed().collect(Collectors.toCollection(ArrayList::new));
+			List<Float> slotFillRatios = NBTHelper.<Float, List<Float>>getCollection(tag, SLOT_FILL_RATIOS_TAG, Tag.TAG_FLOAT, t -> Optional.of(((FloatTag) t).floatValue()), ArrayList::new).orElseGet(ArrayList::new);
 			if (tag.contains(DisplayItem.ITEM_TAG)) {
 				return new ItemDisplayRenderInfo(DisplayItem.deserialize(tag), inaccessibleSlots, infiniteSlots, slotCounts, slotFillRatios);
 			} else if (tag.contains(ITEMS_TAG)) {
@@ -365,7 +366,7 @@ public abstract class RenderInfo {
 		}
 
 		private CompoundTag serialize(CompoundTag tag) {
-			tag.put(ITEM_TAG, RegistryHelper.getRegistryAccess().map(item::saveOptional).orElse(new CompoundTag()));
+			tag.put(ITEM_TAG, RegistryHelper.getRegistryAccess().map(registryAccess -> CodecHelper.encodeItemStack(registryAccess, item)).orElse(new CompoundTag()));
 			tag.putInt(ROTATION_TAG, rotation);
 			tag.putInt(SLOT_INDEX_TAG, slotIndex);
 			tag.putString(DISPLAY_SIDE_TAG, displaySide.getSerializedName());
@@ -373,8 +374,8 @@ public abstract class RenderInfo {
 		}
 
 		private static DisplayItem deserialize(CompoundTag tag) {
-			return new DisplayItem(RegistryHelper.getRegistryAccess().map(registryAccess -> ItemStack.parseOptional(registryAccess, tag.getCompound(ITEM_TAG))).orElse(ItemStack.EMPTY),
-					tag.getInt(ROTATION_TAG), tag.getInt(SLOT_INDEX_TAG), DisplaySide.fromName(tag.getString(DISPLAY_SIDE_TAG)));
+			return new DisplayItem(RegistryHelper.getRegistryAccess().flatMap(registryAccess -> CodecHelper.decodeItemStack(registryAccess, tag.getCompoundOrEmpty(ITEM_TAG))).orElse(ItemStack.EMPTY),
+					tag.getIntOr(ROTATION_TAG, 0), tag.getIntOr(SLOT_INDEX_TAG, 0), DisplaySide.fromName(tag.getStringOr(DISPLAY_SIDE_TAG, "")));
 		}
 
 		public ItemStack getItem() {

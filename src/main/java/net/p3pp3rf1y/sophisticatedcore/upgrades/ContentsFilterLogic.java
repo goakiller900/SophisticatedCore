@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades;
 
-import io.github.fabricators_of_create.porting_lib.util.DeferredHolder;
+import net.p3pp3rf1y.sophisticatedcore.util.RegistrySupplier;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.world.item.ItemStack;
 import net.p3pp3rf1y.sophisticatedcore.inventory.InventoryHandler;
@@ -15,7 +15,7 @@ public class ContentsFilterLogic extends FilterLogic {
 	private final Supplier<InventoryHandler> getInventoryHandler;
 	private final MemorySettingsCategory memorySettings;
 
-	public ContentsFilterLogic(ItemStack upgrade, Consumer<ItemStack> saveHandler, int filterSlotCount, Supplier<InventoryHandler> getInventoryHandler, MemorySettingsCategory memorySettings, DeferredHolder<DataComponentType<?>, DataComponentType<FilterAttributes>> filterAttributesComponent) {
+	public ContentsFilterLogic(ItemStack upgrade, Consumer<ItemStack> saveHandler, int filterSlotCount, Supplier<InventoryHandler> getInventoryHandler, MemorySettingsCategory memorySettings, RegistrySupplier<DataComponentType<FilterAttributes>> filterAttributesComponent) {
 		super(upgrade, saveHandler, filterSlotCount, filterAttributesComponent);
 		this.getInventoryHandler = getInventoryHandler;
 		this.memorySettings = memorySettings;

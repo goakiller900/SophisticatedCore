@@ -2,10 +2,14 @@ package net.p3pp3rf1y.sophisticatedcore.compat.jei;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.*;
+import net.p3pp3rf1y.sophisticatedcore.crafting.IWrapperRecipe;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,14 +20,18 @@ import java.util.function.Function;
 public class ClientRecipeHelper {
 	private ClientRecipeHelper() {}
 
-	public static <T extends Recipe<?>> Optional<RecipeHolder<T>> getCraftingRecipeByKey(RecipeType<T> type, ResourceLocation recipeKey) {
+	public static <T extends Recipe<?>> Optional<RecipeHolder<T>> getCraftingRecipeByKey(RecipeType<T> type, Identifier recipeKey) {
 		Minecraft minecraft = Minecraft.getInstance();
 		ClientLevel world = minecraft.level;
 		if (world == null) {
 			return Optional.empty();
 		}
 
-		RecipeHolder<?> recipeHolder = world.getRecipeManager().byKey(recipeKey).orElse(null);
+		RecipeManager recipeManager = getRecipeManager(minecraft);
+		if (recipeManager == null) {
+			return Optional.empty();
+		}
+		RecipeHolder<?> recipeHolder = recipeManager.byKey(ResourceKey.create(Registries.RECIPE, recipeKey)).orElse(null);
 		return recipeHolder != null && recipeHolder.value().getType().equals(type) ? Optional.of((RecipeHolder<T>) recipeHolder) : Optional.empty();
 	}
 
@@ -34,9 +42,14 @@ public class ClientRecipeHelper {
 			return Collections.emptyList();
 		}
 
-		return level.getRecipeManager()
-				.getAllRecipesFor(recipeType)
+		RecipeManager recipeManager = getRecipeManager(minecraft);
+		if (recipeManager == null) {
+			return Collections.emptyList();
+		}
+
+		return recipeManager.getRecipes()
 				.stream()
+				.filter(r -> r.value().getType().equals(recipeType))
 				.filter(r -> filterRecipeClass.isInstance(r.value()))
 				.map(r -> new RecipeHolder<>(r.id(), transformRecipe.apply(filterRecipeClass.cast(r.value()))))
 				.toList();
@@ -49,37 +62,46 @@ public class ClientRecipeHelper {
 			return Collections.emptyList();
 		}
 
-		return level.getRecipeManager()
-				.getAllRecipesFor(recipeType)
+		RecipeManager recipeManager = getRecipeManager(minecraft);
+		if (recipeManager == null) {
+			return Collections.emptyList();
+		}
+
+		return recipeManager.getRecipes()
 				.stream()
+				.filter(r -> r.value().getType().equals(recipeType))
 				.filter(r -> filterRecipeClass.isInstance(r.value()))
 				.map(r -> transformRecipe.apply(filterRecipeClass.cast(r.value())))
 				.collect(ArrayList::new, List::addAll, List::addAll);
 	}
 
 	public static CraftingRecipe copyShapedRecipe(ShapedRecipe recipe) {
-		return new ShapedRecipe("", recipe.category(), recipe.pattern, getResultItem(recipe));
+		return new ShapedRecipe(new Recipe.CommonInfo(recipe.showNotification()), new CraftingRecipe.CraftingBookInfo(recipe.category(), recipe.group()), recipe.pattern, ItemStackTemplate.fromNonEmptyStack(getResultItem(recipe)));
 	}
 
 	public static CraftingRecipe copyShapelessRecipe(ShapelessRecipe recipe) {
-		return new ShapelessRecipe("", recipe.category(), getResultItem(recipe), recipe.getIngredients());
-	}
-
-	private static ItemStack registryAccessAware(Function<RegistryAccess, ItemStack> func) {
-		Minecraft minecraft = Minecraft.getInstance();
-		ClientLevel level = minecraft.level;
-		if (level == null) {
-			throw new NullPointerException("level must not be null.");
-		}
-		RegistryAccess registryAccess = level.registryAccess();
-		return func.apply(registryAccess);
+		return new ShapelessRecipe(new Recipe.CommonInfo(recipe.showNotification()), new CraftingRecipe.CraftingBookInfo(recipe.category(), recipe.group()), ItemStackTemplate.fromNonEmptyStack(getResultItem(recipe)), recipe.placementInfo().ingredients());
 	}
 
 	public static ItemStack getResultItem(Recipe<?> recipe) {
-		return registryAccessAware(recipe::getResultItem);
+		if (recipe instanceof IWrapperRecipe<?> wrapperRecipe) {
+			return getResultItem(wrapperRecipe.getCompose());
+		}
+		if (recipe instanceof ShapedRecipe shapedRecipe) {
+			return shapedRecipe.result.create();
+		}
+		if (recipe instanceof ShapelessRecipe shapelessRecipe) {
+			return shapelessRecipe.result.create();
+		}
+		return ItemStack.EMPTY;
 	}
 
 	public static <I extends RecipeInput> ItemStack assemble(Recipe<I> recipe, I container) {
-		return registryAccessAware(registry -> recipe.assemble(container, registry));
+		return recipe.assemble(container);
+	}
+
+	private static RecipeManager getRecipeManager(Minecraft minecraft) {
+		MinecraftServer server = minecraft.getSingleplayerServer();
+		return server == null ? null : server.getRecipeManager();
 	}
 }

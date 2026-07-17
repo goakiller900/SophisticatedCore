@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.extensions.inventory;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.Slot;
 
 public interface SophisticatedSlot {
@@ -9,10 +9,14 @@ public interface SophisticatedSlot {
     }
 
     default int sophisticatedCore_getSlotIndex() {
-        return 0;
+        return ((Slot) this).getContainerSlot();
     }
 
-    default Slot sophisticatedCore_setBackground(ResourceLocation atlas, ResourceLocation sprite) {
+    default Slot sophisticatedCore_setBackground(Identifier atlas, Identifier sprite) {
         throw new RuntimeException("Should have been overriden by mixin.");
     }
+
+	default Slot sophisticatedCore_setBackground(Identifier sprite) {
+		return sophisticatedCore_setBackground(sprite, sprite);
+	}
 }

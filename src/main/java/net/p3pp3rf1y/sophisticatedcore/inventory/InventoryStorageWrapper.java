@@ -1,7 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.inventory;
 
-import io.github.fabricators_of_create.porting_lib.transfer.item.SlottedStackStorage;
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
@@ -22,11 +21,11 @@ public class InventoryStorageWrapper implements SlottedStackStorage, IInventoryH
 		return new InventoryStorageWrapper(container);
 	}
 
-	private final InventoryStorage wrapped;
+	private final ContainerStorage wrapped;
 	private final Container wrappedInventory;
 
 	private InventoryStorageWrapper(Container inventory) {
-		this.wrapped = InventoryStorage.of(inventory, null);
+		this.wrapped = ContainerStorage.of(inventory, null);
 		this.wrappedInventory = inventory;
 	}
 

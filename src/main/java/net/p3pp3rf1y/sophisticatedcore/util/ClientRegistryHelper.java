@@ -7,6 +7,9 @@ import net.minecraft.core.RegistryAccess;
 import java.util.Optional;
 
 public class ClientRegistryHelper {
+	private ClientRegistryHelper() {
+	}
+
 	public static Optional<RegistryAccess> getRegistryAccess() {
 		ClientLevel level = Minecraft.getInstance().level;
 

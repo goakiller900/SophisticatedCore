@@ -1,9 +1,9 @@
 package net.p3pp3rf1y.sophisticatedcore.inventory;
 
 import com.mojang.datafixers.util.Pair;
-import io.github.fabricators_of_create.porting_lib.transfer.callbacks.TransactionCallback;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandlerSlot;
+import net.p3pp3rf1y.sophisticatedcore.util.TransactionCallback;
+import net.p3pp3rf1y.sophisticatedcore.inventory.ItemStackHandler;
+import net.p3pp3rf1y.sophisticatedcore.inventory.ItemStackHandlerSlot;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.HolderLookup;
@@ -12,7 +12,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -70,8 +70,8 @@ public abstract class InventoryHandler extends ItemStackHandler implements ITrac
 		this.contentsNbt = contentsNbt;
 		this.saveHandler = saveHandler;
 		setBaseSlotLimit(baseSlotLimit);
-		RegistryHelper.getRegistryAccess().ifPresent(registryAccess -> deserializeNBT(registryAccess, contentsNbt.getCompound(INVENTORY_TAG)));
-		inventoryPartitioner = new InventoryPartitioner(contentsNbt.getCompound(PARTITIONER_TAG), this, () -> storageWrapper.getSettingsHandler().getTypeCategory(MemorySettingsCategory.class));
+		RegistryHelper.getRegistryAccess().ifPresent(registryAccess -> deserializeNBT(registryAccess, contentsNbt.getCompoundOrEmpty(INVENTORY_TAG)));
+		inventoryPartitioner = new InventoryPartitioner(contentsNbt.getCompoundOrEmpty(PARTITIONER_TAG), this, () -> storageWrapper.getSettingsHandler().getTypeCategory(MemorySettingsCategory.class));
 		initStackNbts();
 
 		isInitializing = false;
@@ -145,12 +145,12 @@ public abstract class InventoryHandler extends ItemStackHandler implements ITrac
 	@Override
 	public void deserializeNBT(HolderLookup.Provider registries, CompoundTag nbt) {
 		slotTracker.clear();
-		setSize(nbt.contains("Size", Tag.TAG_INT) ? nbt.getInt("Size") : getSlotCount());
-		ListTag tagList = nbt.getList("Items", Tag.TAG_COMPOUND);
+		setSize(nbt.getIntOr("Size", getSlotCount()));
+		ListTag tagList = nbt.getListOrEmpty("Items");
 		RegistryHelper.getRegistryAccess().ifPresent(registryAccess -> {
 			for (int i = 0; i < tagList.size(); i++) {
-				CompoundTag itemTag = tagList.getCompound(i);
-				int slot = itemTag.getInt("Slot");
+				CompoundTag itemTag = tagList.getCompound(i).orElseGet(CompoundTag::new);
+				int slot = itemTag.getIntOr("Slot", -1);
 				if (slot >= 0 && slot < getSlotCount()) {
 					// Changed to call onStackChange in the load function
 					this.getSlot(slot).load(registryAccess, itemTag);
@@ -470,7 +470,7 @@ public abstract class InventoryHandler extends ItemStackHandler implements ITrac
 	}
 
 	@Nullable
-	public Pair<ResourceLocation, ResourceLocation> getNoItemIcon(int slotIndex) {
+	public Pair<Identifier, Identifier> getNoItemIcon(int slotIndex) {
 		return inventoryPartitioner.getNoItemIcon(slotIndex);
 	}
 
@@ -650,8 +650,7 @@ public abstract class InventoryHandler extends ItemStackHandler implements ITrac
 		}
 
 		protected void setInternalNewStack(ItemStack stack) {
-			super.setStack(stack);
-			onStackChange();
+			super.setNewStack(stack);
 		}
 
 		@Override
@@ -674,8 +673,7 @@ public abstract class InventoryHandler extends ItemStackHandler implements ITrac
 
 		@Override
 		public void load(HolderLookup.Provider provider, CompoundTag tag) {
-			getStackFromNbt(tag, provider).ifPresent(this::setStack);
-			onStackChange();
+			getStackFromNbt(tag, provider).ifPresent(this::setNewStack);
 		}
 	}
 }

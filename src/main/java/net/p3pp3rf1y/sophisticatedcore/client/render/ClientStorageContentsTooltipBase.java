@@ -1,27 +1,24 @@
 package net.p3pp3rf1y.sophisticatedcore.client.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.item.ItemStack;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.p3pp3rf1y.sophisticatedcore.api.IStorageWrapper;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.*;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.IUpgradeWrapper;
 import net.p3pp3rf1y.sophisticatedcore.util.CountAbbreviator;
-import net.p3pp3rf1y.sophisticatedcore.fluid.FluidUtil;
 import net.p3pp3rf1y.sophisticatedcore.util.InventoryHelper;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
+import org.jspecify.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -64,7 +61,7 @@ public abstract class ClientStorageContentsTooltipBase implements ClientTooltipC
 	}
 
 	protected long getLastRequestTime() {
-		return ClientStorageContentsTooltipBase.lastRequestTime;
+		return lastRequestTime;
 	}
 
 	private void requestContents(LocalPlayer player, IStorageWrapper wrapper) {
@@ -83,7 +80,6 @@ public abstract class ClientStorageContentsTooltipBase implements ClientTooltipC
 			upgrades.clear();
 			tooltipLines.clear();
 			if (storageUuid != null) {
-				wrapper.onContentsNbtUpdated();
 				sortedContents = InventoryHelper.getCompactedStacksSortedByCount(wrapper.getInventoryHandler());
 				upgrades = new ArrayList<>(wrapper.getUpgradeHandler().getSlotWrappers().values());
 				addMultiplierTooltip(wrapper);
@@ -91,7 +87,8 @@ public abstract class ClientStorageContentsTooltipBase implements ClientTooltipC
 				addEnergyTooltip(wrapper);
 			}
 			if (upgrades.isEmpty() && sortedContents.isEmpty()) {
-				tooltipLines.add(Component.translatable(TranslationHelper.INSTANCE.translItemTooltip(STORAGE_ITEM) + ".empty").withStyle(ChatFormatting.YELLOW));
+				tooltipLines
+						.add(Component.translatable(TranslationHelper.INSTANCE.translItemTooltip(STORAGE_ITEM) + ".empty").withStyle(ChatFormatting.YELLOW));
 			}
 
 			calculateHeight();
@@ -105,7 +102,7 @@ public abstract class ClientStorageContentsTooltipBase implements ClientTooltipC
 	}
 
 	protected boolean shouldRefreshContents() {
-		return ClientStorageContentsTooltipBase.shouldRefreshContents;
+		return shouldRefreshContents;
 	}
 
 	private void calculateWidth() {
@@ -153,15 +150,16 @@ public abstract class ClientStorageContentsTooltipBase implements ClientTooltipC
 			DecimalFormat df = new DecimalFormat("0.###");
 
 			tooltipLines.add(Component.translatable(TranslationHelper.INSTANCE.translItemTooltip(STORAGE_ITEM) + ".stack_multiplier",
-					Component.literal(df.format(multiplier)).withStyle(ChatFormatting.WHITE)
-			).withStyle(ChatFormatting.GREEN));
+					Component.literal(df.format(multiplier)).withStyle(ChatFormatting.WHITE)).withStyle(ChatFormatting.GREEN));
 		}
 	}
 
 	private void addEnergyTooltip(IStorageWrapper wrapper) {
-		wrapper.getEnergyStorage().ifPresent(energyStorage -> tooltipLines.add(Component.translatable(getEnergyTooltipTranslation(),
-				Component.literal(CountAbbreviator.abbreviate((int) energyStorage.getAmount())).withStyle(ChatFormatting.WHITE)).withStyle(ChatFormatting.RED)
-		));
+		wrapper.getEnergyStorage()
+				.ifPresent(energyStorage -> tooltipLines.add(Component
+						.translatable(getEnergyTooltipTranslation(),
+									Component.literal(CountAbbreviator.abbreviate((int) Math.min(Integer.MAX_VALUE, energyStorage.getAmount()))).withStyle(ChatFormatting.WHITE))
+						.withStyle(ChatFormatting.RED)));
 	}
 
 	protected String getEnergyTooltipTranslation() {
@@ -170,15 +168,13 @@ public abstract class ClientStorageContentsTooltipBase implements ClientTooltipC
 
 	private void addFluidTooltip(IStorageWrapper wrapper) {
 		wrapper.getFluidHandler().ifPresent(fluidHandler -> {
-			for (StorageView<FluidVariant> view : fluidHandler) {
-				if (view.isResourceBlank()) {
+			for (StorageView<FluidVariant> fluidView : fluidHandler) {
+				if (fluidView.isResourceBlank()) {
 					tooltipLines.add(Component.translatable(getEmptyFluidTooltipTranslation()).withStyle(ChatFormatting.BLUE));
 				} else {
 					tooltipLines.add(Component.translatable(getFluidTooltipTranslation(),
-							Component.literal(CountAbbreviator.abbreviate(FluidUtil.toBuckets(view.getAmount()))).withStyle(ChatFormatting.WHITE),
-							((MutableComponent)FluidVariantAttributes.getName(view.getResource())).withStyle(ChatFormatting.BLUE)
-
-					));
+							Component.literal(CountAbbreviator.abbreviate((int) Math.min(Integer.MAX_VALUE, fluidView.getAmount()))).withStyle(ChatFormatting.WHITE),
+							new FluidStack(fluidView).getHoverName().copy().withStyle(ChatFormatting.BLUE)));
 				}
 			}
 		});
@@ -211,11 +207,11 @@ public abstract class ClientStorageContentsTooltipBase implements ClientTooltipC
 	}
 
 	@Override
-	public int getHeight() {
+	public int getHeight(Font font) {
 		return height;
 	}
 
-	protected void renderTooltip(IStorageWrapper wrapper, Font font, int leftX, int topY, GuiGraphics guiGraphics) {
+	protected void extractTooltip(IStorageWrapper wrapper, Font font, int leftX, int topY, GuiGraphicsExtractor guiGraphics) {
 		Minecraft minecraft = Minecraft.getInstance();
 		LocalPlayer player = minecraft.player;
 		if (player == null) {
@@ -226,50 +222,46 @@ public abstract class ClientStorageContentsTooltipBase implements ClientTooltipC
 		renderComponent(font, leftX, topY, guiGraphics, minecraft);
 	}
 
-	private void renderComponent(Font font, int leftX, int topY, GuiGraphics guiGraphics, Minecraft minecraft) {
+	private void renderComponent(Font font, int leftX, int topY, GuiGraphicsExtractor guiGraphics, Minecraft minecraft) {
 		for (Component tooltipLine : tooltipLines) {
 			topY = renderTooltipLine(guiGraphics, leftX, topY, font, tooltipLine);
 		}
 		renderContentsTooltip(minecraft, font, leftX, topY, guiGraphics);
 	}
 
-	private void renderContentsTooltip(Minecraft minecraft, Font font, int leftX, int topY, GuiGraphics guiGraphics) {
+	private void renderContentsTooltip(Minecraft minecraft, Font font, int leftX, int topY, GuiGraphicsExtractor guiGraphics) {
 		if (!upgrades.isEmpty()) {
-			topY = renderTooltipLine(guiGraphics, leftX, topY, font, Component.translatable(TranslationHelper.INSTANCE.translItemTooltip(STORAGE_ITEM) + ".upgrades").withStyle(ChatFormatting.YELLOW));
+			topY = renderTooltipLine(guiGraphics, leftX, topY, font,
+					Component.translatable(TranslationHelper.INSTANCE.translItemTooltip(STORAGE_ITEM) + ".upgrades").withStyle(ChatFormatting.YELLOW));
 			topY = renderUpgrades(guiGraphics, leftX, topY);
 		}
 		if (!sortedContents.isEmpty()) {
-			topY = renderTooltipLine(guiGraphics, leftX, topY, font, Component.translatable(TranslationHelper.INSTANCE.translItemTooltip(STORAGE_ITEM) + ".inventory").withStyle(ChatFormatting.YELLOW));
+			topY = renderTooltipLine(guiGraphics, leftX, topY, font,
+					Component.translatable(TranslationHelper.INSTANCE.translItemTooltip(STORAGE_ITEM) + ".inventory").withStyle(ChatFormatting.YELLOW));
 			renderContents(minecraft, leftX, topY, guiGraphics, font);
 		}
 	}
 
-	private int renderTooltipLine(GuiGraphics guiGraphics, int leftX, int topY, Font font, Component tooltip) {
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
-		poseStack.translate(0.0D, 0.0D, 200.0F);
-		guiGraphics.drawString(font, tooltip, leftX, topY, 16777215);
-		poseStack.translate(0.0D, 0.0D, -200.0F);
-		poseStack.popPose();
+	private int renderTooltipLine(GuiGraphicsExtractor guiGraphics, int leftX, int topY, Font font, Component tooltip) {
+		guiGraphics.text(font, tooltip, leftX, topY, ARGB.opaque(0xFFFFFF));
 		return topY + 10;
 	}
 
-	private int renderUpgrades(GuiGraphics guiGraphics, int leftX, int topY) {
+	private int renderUpgrades(GuiGraphicsExtractor guiGraphics, int leftX, int topY) {
 		int x = leftX;
 		for (IUpgradeWrapper upgradeWrapper : upgrades) {
 			if (upgradeWrapper.canBeDisabled()) {
-				RenderSystem.disableDepthTest();
 				GuiHelper.blit(guiGraphics, x, topY + 3, upgradeWrapper.isEnabled() ? UPGRADE_ON : UPGRADE_OFF);
 				x += 4;
 			}
-			guiGraphics.renderItem(upgradeWrapper.getUpgradeStack(), x, topY);
+			guiGraphics.item(upgradeWrapper.getUpgradeStack(), x, topY);
 			x += DEFAULT_STACK_WIDTH;
 		}
 		topY += 20;
 		return topY;
 	}
 
-	private void renderContents(Minecraft minecraft, int leftX, int topY, GuiGraphics guiGraphics, Font font) {
+	private void renderContents(Minecraft minecraft, int leftX, int topY, GuiGraphicsExtractor guiGraphics, Font font) {
 		int x = leftX;
 		for (int i = 0; i < sortedContents.size(); i++) {
 			int y = topY + i / MAX_STACKS_ON_LINE * 20;
@@ -279,8 +271,8 @@ public abstract class ClientStorageContentsTooltipBase implements ClientTooltipC
 			ItemStack stack = sortedContents.get(i);
 			int stackWidth = Math.max(getStackCountWidth(minecraft.font, stack), DEFAULT_STACK_WIDTH);
 			int xOffset = stackWidth - DEFAULT_STACK_WIDTH;
-			guiGraphics.renderItem(stack, x + xOffset, y);
-			guiGraphics.renderItemDecorations(font, stack, x + xOffset, y, CountAbbreviator.abbreviate(stack.getCount()));
+			guiGraphics.item(stack, x + xOffset, y);
+			guiGraphics.itemDecorations(font, stack, x + xOffset, y, CountAbbreviator.abbreviate(stack.getCount()));
 			x += stackWidth;
 		}
 	}

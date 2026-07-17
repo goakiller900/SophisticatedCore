@@ -16,7 +16,7 @@ public class LitematicaCompat implements ICompat {
 	public record LitematicaWrapper(IStorageWrapper wrapper, Function<UUID, CustomPacketPayload> packetGenerator) {
 	}
 
-	public static final ItemApiLookup<LitematicaWrapper, HolderLookup.Provider> LITEMATICA_CAPABILITY = ItemApiLookup.get(SophisticatedCore.getRL("sophisticatedcore_requestcontents"), LitematicaWrapper.class, HolderLookup.Provider.class);
+	public static final ItemApiLookup<LitematicaWrapper, HolderLookup.Provider> LITEMATICA_CAPABILITY = ItemApiLookup.get(SophisticatedCore.getIdentifier("sophisticatedcore_requestcontents"), LitematicaWrapper.class, HolderLookup.Provider.class);
 
 	public static Optional<LitematicaWrapper> getWrapper(ItemStack provider) {
 		return Optional.ofNullable(LITEMATICA_CAPABILITY.find(provider, null));

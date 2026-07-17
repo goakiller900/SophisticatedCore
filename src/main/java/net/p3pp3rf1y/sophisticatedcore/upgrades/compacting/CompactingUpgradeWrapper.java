@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades.compacting;
 
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
+import net.p3pp3rf1y.sophisticatedcore.inventory.ItemStackHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;

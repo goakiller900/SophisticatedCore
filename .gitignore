@@ -27,6 +27,7 @@ buildSrc/out/
 # include sourcecode
 !src/
 src/generated/resources/.cache/
+src/generated/main/
 
 # include git important files
 !.gitmodules

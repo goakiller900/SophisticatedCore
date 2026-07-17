@@ -1,8 +1,8 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades.pump;
 
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import io.github.fabricators_of_create.porting_lib.transfer.fluid.block.BucketPickupHandlerWrapper;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.TransferHelper;
+import net.p3pp3rf1y.sophisticatedcore.fluid.BucketPickupHandlerWrapper;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -99,7 +99,7 @@ public class PumpUpgradeWrapper extends UpgradeWrapperBase<PumpUpgradeWrapper, P
 
 	private Optional<Integer> interactWithAttachedFluidHandlers(Level level, BlockPos pos, Storage<FluidVariant> storageFluidHandler) {
 		for (Direction dir : Direction.values()) {
-			boolean successful = WorldHelper.getBlockEntity(level, pos.offset(dir.getNormal())).map(be ->
+			boolean successful = WorldHelper.getBlockEntity(level, pos.relative(dir)).map(be ->
 					CapabilityHelper.<Boolean>getFromFluidHandler(be, dir.getOpposite(), fluidHandler -> {
 						if (isInput()) {
 							return fillFromFluidHandler(fluidHandler, storageFluidHandler, getMaxInOut());
@@ -129,7 +129,7 @@ public class PumpUpgradeWrapper extends UpgradeWrapperBase<PumpUpgradeWrapper, P
 			return fillFromBlockInRange(level, pos, storageFluidHandler, player);
 		} else {
 			for (Direction dir : Direction.values()) {
-				BlockPos offsetPos = pos.offset(dir.getNormal());
+				BlockPos offsetPos = pos.relative(dir);
 				if (placeFluidInWorld(level, storageFluidHandler, dir, offsetPos)) {
 					return Optional.of(WORLD_INTERACTION_COOLDOWN_TIME);
 				}
@@ -168,7 +168,7 @@ public class PumpUpgradeWrapper extends UpgradeWrapperBase<PumpUpgradeWrapper, P
 			}
 
 			for (Direction dir : Direction.values()) {
-				BlockPos offsetPos = pos.offset(dir.getNormal());
+				BlockPos offsetPos = pos.relative(dir);
 				if (!searchedPositions.contains(offsetPos)) {
 					searchedPositions.add(offsetPos);
 					if (basePos.distSqr(offsetPos) < PUMP_IN_WORLD_RANGE_SQR) {
@@ -271,7 +271,7 @@ public class PumpUpgradeWrapper extends UpgradeWrapperBase<PumpUpgradeWrapper, P
 	}
 
 	private boolean fillFromFluidHandler(Storage<FluidVariant> fluidHandler, Storage<FluidVariant> storageFluidHandler, long maxDrain) {
-		FluidStack containedFluid = TransferUtil.simulateExtractAnyFluid(fluidHandler, maxDrain);
+		FluidStack containedFluid = TransferHelper.simulateExtractAnyFluid(fluidHandler, maxDrain);
 		if (!containedFluid.isEmpty() && fluidFilterLogic.fluidMatches(containedFluid)) {
 			return StorageUtil.move(fluidHandler, storageFluidHandler, fluidVariant -> fluidVariant.isOf(containedFluid.getFluid()), containedFluid.getAmount(), null) > 0;
 		}

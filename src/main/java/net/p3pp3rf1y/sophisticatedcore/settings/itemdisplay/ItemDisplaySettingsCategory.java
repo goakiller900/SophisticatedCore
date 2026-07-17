@@ -175,7 +175,7 @@ public class ItemDisplaySettingsCategory implements ISettingsCategory<ItemDispla
 	}
 
 	private void serializeSlotIndexes() {
-		categoryNbt.putIntArray(SLOTS_TAG, slotIndexes);
+		categoryNbt.putIntArray(SLOTS_TAG, slotIndexes.stream().mapToInt(Integer::intValue).toArray());
 		saveNbt.accept(categoryNbt);
 	}
 
@@ -251,7 +251,7 @@ public class ItemDisplaySettingsCategory implements ISettingsCategory<ItemDispla
 				slotIndexes.add(slot);
 			}
 		});
-		slotRotations = NBTHelper.getMap(categoryNbt, ROTATIONS_TAG, Integer::valueOf, (k, v) -> Optional.of(((IntTag) v).getAsInt())).orElseGet(HashMap::new);
+		slotRotations = NBTHelper.<Integer, Integer>getMap(categoryNbt, ROTATIONS_TAG, Integer::valueOf, (k, v) -> Optional.of(((IntTag) v).intValue())).orElseGet(HashMap::new);
 		color = NBTHelper.getInt(categoryNbt, COLOR_TAG).map(DyeColor::byId).orElse(DyeColor.RED);
 
 		//legacy nbt support to be removed in the future

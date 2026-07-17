@@ -3,8 +3,10 @@ package net.p3pp3rf1y.sophisticatedcore.util;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.util.StringRepresentable;
 
 import java.util.Collection;
@@ -19,43 +21,35 @@ public class NBTHelper {
 	private NBTHelper() {}
 
 	public static Optional<Integer> getInt(CompoundTag tag, String key) {
-		return getTagValue(tag, key, CompoundTag::getInt);
+		return tag.getInt(key);
 	}
 
 	public static Optional<int[]> getIntArray(CompoundTag tag, String key) {
-		return getTagValue(tag, key, CompoundTag::getIntArray);
+		return tag.getIntArray(key);
 	}
 
 	public static Optional<Boolean> getBoolean(CompoundTag tag, String key) {
-		return getTagValue(tag, key, CompoundTag::getBoolean);
+		return tag.getBoolean(key);
 	}
 
 	public static Optional<CompoundTag> getCompound(CompoundTag tag, String key) {
-		return getTagValue(tag, key, CompoundTag::getCompound);
-	}
-
-	public static <T> Optional<T> getTagValue(CompoundTag tag, String key, BiFunction<CompoundTag, String, T> getValue) {
-		if (!tag.contains(key)) {
-			return Optional.empty();
-		}
-
-		return Optional.of(getValue.apply(tag, key));
+		return tag.getCompound(key);
 	}
 
 	public static <E, C extends Collection<E>> Optional<C> getCollection(CompoundTag tag, String key, byte listType, Function<Tag, Optional<E>> getElement, Supplier<C> initCollection) {
-		return getTagValue(tag, key, (c, n) -> c.getList(n, listType)).map(listNbt -> {
+		return tag.getList(key).map(listNbt -> {
 			C ret = initCollection.get();
-			listNbt.forEach(elementNbt -> getElement.apply(elementNbt).ifPresent(ret::add));
+			listNbt.stream().filter(elementNbt -> elementNbt.getId() == listType).forEach(elementNbt -> getElement.apply(elementNbt).ifPresent(ret::add));
 			return ret;
 		});
 	}
 
 	public static <T extends Enum<T>> Optional<T> getEnumConstant(CompoundTag tag, String key, Function<String, T> deserialize) {
-		return getTagValue(tag, key, (t, k) -> deserialize.apply(t.getString(k)));
+		return tag.getString(key).map(deserialize);
 	}
 
 	public static Optional<Long> getLong(CompoundTag tag, String key) {
-		return getTagValue(tag, key, CompoundTag::getLong);
+		return tag.getLong(key);
 	}
 
 	public static CompoundTag putBoolean(CompoundTag tag, String key, boolean value) {
@@ -79,11 +73,11 @@ public class NBTHelper {
 	}
 
 	public static Optional<Component> getComponent(CompoundTag tag, String key, HolderLookup.Provider registries) {
-		return getTagValue(tag, key, (t, k) -> Component.Serializer.fromJson(t.getString(k), registries));
+		return tag.read(key, ComponentSerialization.CODEC, registries.createSerializationContext(NbtOps.INSTANCE));
 	}
 
 	public static Optional<String> getString(CompoundTag tag, String key) {
-		return getTagValue(tag, key, CompoundTag::getString);
+		return tag.getString(key);
 	}
 
 	public static <K, V> Optional<Map<K, V>> getMap(CompoundTag tag, String key, Function<String, K> getKey, BiFunction<String, Tag, Optional<V>> getValue) {
@@ -91,11 +85,11 @@ public class NBTHelper {
 	}
 
 	public static <K, V> Optional<Map<K, V>> getMap(CompoundTag tag, String key, Function<String, K> getKey, BiFunction<String, Tag, Optional<V>> getValue, Supplier<Map<K, V>> initMap) {
-		CompoundTag mapNbt = tag.getCompound(key);
+		CompoundTag mapNbt = tag.getCompoundOrEmpty(key);
 
 		Map<K, V> map = initMap.get();
 
-		for (String tagName : mapNbt.getAllKeys()) {
+		for (String tagName : mapNbt.keySet()) {
 			getValue.apply(tagName, mapNbt.get(tagName)).ifPresent(value -> map.put(getKey.apply(tagName), value));
 		}
 

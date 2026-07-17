@@ -62,7 +62,6 @@ public abstract class PropertyBasedSubtypeInterpreter implements ISubtypeInterpr
 		return results;
 	}
 
-	@Override
 	public String getLegacyStringSubtypeInfo(ItemStack itemStack, UidContext context) {
 		StringBuilder result = new StringBuilder();
 		for (IPropertyDefinition<?> definition : propertyDefinitions) {

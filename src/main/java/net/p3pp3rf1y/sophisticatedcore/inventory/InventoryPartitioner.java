@@ -5,7 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.p3pp3rf1y.sophisticatedcore.settings.memory.MemorySettingsCategory;
 import net.p3pp3rf1y.sophisticatedcore.util.SlotRange;
@@ -50,7 +50,7 @@ public class InventoryPartitioner {
 	}
 
 	@Nullable
-	public Pair<ResourceLocation, ResourceLocation> getNoItemIcon(int slot) {
+	public Pair<Identifier, Identifier> getNoItemIcon(int slot) {
 		return getPartBySlot(slot).getNoItemIcon(slot);
 	}
 
@@ -220,13 +220,13 @@ public class InventoryPartitioner {
 			return;
 		}
 
-		baseIndexes = tag.getIntArray(BASE_INDEXES_TAG);
+		baseIndexes = tag.getIntArray(BASE_INDEXES_TAG).orElseGet(() -> new int[] {0});
 		inventoryPartHandlers = new IInventoryPartHandler[baseIndexes.length];
-		ListTag partNamesTag = tag.getList("inventoryPartNames", Tag.TAG_STRING);
+		ListTag partNamesTag = tag.getListOrEmpty("inventoryPartNames");
 		int i = 0;
 		for (Tag t : partNamesTag) {
 			SlotRange slotRange = new SlotRange(baseIndexes[i], (i + 1 < baseIndexes.length ? baseIndexes[i + 1] : parent.getSlotCount()) - baseIndexes[i]);
-			inventoryPartHandlers[i] = InventoryPartRegistry.instantiatePart(t.getAsString(), parent, slotRange, getMemorySettings);
+			inventoryPartHandlers[i] = InventoryPartRegistry.instantiatePart(t.asString().orElse("default"), parent, slotRange, getMemorySettings);
 			i++;
 		}
 	}

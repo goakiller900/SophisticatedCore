@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 public class DeduplicationProcessor implements ProjectProcessor {
 	@Override
 	public void apply(Project project) {
-		project.getTasks().named("remapJar", Jar.class).configure(task -> task.doLast($ -> {
+		project.getTasks().named("jar", Jar.class).configure(task -> task.doLast($ -> {
 			Path path = task.getArchiveFile().get().getAsFile().toPath();
 			this.deduplicateInclusions(path);
 		}));

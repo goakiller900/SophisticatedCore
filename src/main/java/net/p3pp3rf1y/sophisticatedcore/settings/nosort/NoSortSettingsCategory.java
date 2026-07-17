@@ -28,7 +28,7 @@ public class NoSortSettingsCategory implements ISettingsCategory<NoSortSettingsC
 	}
 
 	private void deserialize() {
-		for (int slotNumber : categoryNbt.getIntArray(SELECTED_SLOTS_TAG)) {
+		for (int slotNumber : categoryNbt.getIntArray(SELECTED_SLOTS_TAG).orElseGet(() -> new int[0])) {
 			selectedSlots.add(slotNumber);
 		}
 		NBTHelper.getInt(categoryNbt, COLOR_TAG).ifPresent(c -> color = DyeColor.byId(c));

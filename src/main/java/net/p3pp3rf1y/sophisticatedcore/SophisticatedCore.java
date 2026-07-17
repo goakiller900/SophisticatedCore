@@ -1,11 +1,10 @@
 package net.p3pp3rf1y.sophisticatedcore;
 
-import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
-import io.github.fabricators_of_create.porting_lib.models.geometry.RegisterGeometryLoadersCallback;
+import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
@@ -18,7 +17,6 @@ import net.p3pp3rf1y.sophisticatedcore.init.ModCoreDataComponents;
 import net.p3pp3rf1y.sophisticatedcore.inventory.StorageWrapperRepository;
 import net.p3pp3rf1y.sophisticatedcore.settings.DatapackSettingsTemplateManager;
 import net.p3pp3rf1y.sophisticatedcore.util.RecipeHelper;
-import net.p3pp3rf1y.sophisticatedcore.util.model.DynamicFluidContainerModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,8 +46,8 @@ public class SophisticatedCore implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		NeoForgeConfigRegistry.INSTANCE.register(SophisticatedCore.MOD_ID, ModConfig.Type.CLIENT, Config.CLIENT_SPEC);
-		NeoForgeConfigRegistry.INSTANCE.register(SophisticatedCore.MOD_ID, ModConfig.Type.COMMON, Config.COMMON_SPEC);
+		ConfigRegistry.INSTANCE.register(SophisticatedCore.MOD_ID, ModConfig.Type.CLIENT, Config.CLIENT_SPEC);
+		ConfigRegistry.INSTANCE.register(SophisticatedCore.MOD_ID, ModConfig.Type.COMMON, Config.COMMON_SPEC);
 		commonEventHandler.registerHandlers();
 		ModCompat.register();
 		CompatRegistry.getRegistry(MOD_ID).initCompats();
@@ -64,7 +62,6 @@ public class SophisticatedCore implements ModInitializer {
 
 		CompatRegistry.getRegistry(MOD_ID).setupCompats();
 
-		RegisterGeometryLoadersCallback.EVENT.register(loaders -> loaders.put(SophisticatedCore.getRL("fluid_container"), DynamicFluidContainerModel.Loader.INSTANCE));
 	}
 
 	private static void serverStarted(MinecraftServer server) {
@@ -81,8 +78,8 @@ public class SophisticatedCore implements ModInitializer {
 		currentServer = null;
 	}
 
-	public static ResourceLocation getRL(String regName) {
-		return ResourceLocation.parse(getRegistryName(regName));
+	public static Identifier getIdentifier(String regName) {
+		return Identifier.parse(getRegistryName(regName));
 	}
 
 	public static String getRegistryName(String regName) {

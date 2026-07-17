@@ -3,11 +3,10 @@ package net.p3pp3rf1y.sophisticatedcore.crafting;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.Tuple;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
@@ -23,7 +22,6 @@ import java.util.Map;
 
 public abstract class StorageDyeRecipeBase extends CustomRecipe {
 	protected StorageDyeRecipeBase(CraftingBookCategory category) {
-		super(category);
 	}
 
 	@Override
@@ -50,9 +48,9 @@ public abstract class StorageDyeRecipeBase extends CustomRecipe {
 	}
 
 	@Override
-	public ItemStack assemble(CraftingInput inv, HolderLookup.Provider registries) {
+	public ItemStack assemble(CraftingInput inv) {
 		Map<Integer, List<DyeColor>> columnDyes = new HashMap<>();
-		Tuple<Integer, ItemStack> columnStorage = null;
+		Pair<Integer, ItemStack> columnStorage = null;
 
 		for (int slot = 0; slot < inv.size(); slot++) {
 			ItemStack slotStack = inv.getItem(slot);
@@ -65,7 +63,7 @@ public abstract class StorageDyeRecipeBase extends CustomRecipe {
 					return ItemStack.EMPTY;
 				}
 
-				columnStorage = new Tuple<>(column, slotStack);
+				columnStorage = Pair.of(column, slotStack);
 			} else if (slotStack.is(ConventionalItemTags.DYES)) {
 				DyeColor dyeColor = getColorFromStack(slotStack);
 				if (dyeColor == null) {
@@ -80,9 +78,9 @@ public abstract class StorageDyeRecipeBase extends CustomRecipe {
 			return ItemStack.EMPTY;
 		}
 
-		ItemStack coloredStorage = columnStorage.getB().copy();
+		ItemStack coloredStorage = columnStorage.getSecond().copy();
 		coloredStorage.setCount(1);
-		int storageColumn = columnStorage.getA();
+		int storageColumn = columnStorage.getFirst();
 
 		applyTintColors(columnDyes, coloredStorage, storageColumn);
 
@@ -109,20 +107,14 @@ public abstract class StorageDyeRecipeBase extends CustomRecipe {
 
 	protected abstract void applyColors(ItemStack coloredStorage, List<DyeColor> mainDyes, List<DyeColor> trimDyes);
 
-	@Override
 	public boolean canCraftInDimensions(int width, int height) {
 		return width >= 2 && height >= 1;
 	}
 
 	@Nullable
 	public static DyeColor getColorFromStack(ItemStack stack) {
-		Item item = stack.getItem();
-		if (item instanceof DyeItem dyeItem) {
-			return dyeItem.getDyeColor();
-		}
-
 		for (DyeColor color : DyeColor.values()) {
-			if (stack.is(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", color.getName() + "_dyes"))))
+			if (stack.is(TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("c", color.getName() + "_dyes"))))
 				return color;
 		}
 

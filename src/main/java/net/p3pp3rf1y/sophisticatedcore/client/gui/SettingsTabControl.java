@@ -1,9 +1,7 @@
 package net.p3pp3rf1y.sophisticatedcore.client.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -12,8 +10,8 @@ import net.p3pp3rf1y.sophisticatedcore.client.gui.controls.CompositeWidgetBase;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Dimension;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Position;
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.jspecify.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,40 +28,32 @@ public abstract class SettingsTabControl<C extends AbstractContainerScreen<?>, T
 	protected <U extends T> U addSettingsTab(Runnable onTabOpenContainerAction, Runnable onTabCloseContainerAction, U tab) {
 		U settingsTab = addChild(tab);
 		settingsTab.setHandlers(() -> {
-					if (openTab != null && differentTabIsOpen(settingsTab)) {
-						openTab.close();
-					}
-					openTab = settingsTab;
-					onTabOpenContainerAction.run();
-				},
-				() -> {
-					if (openTab != null) {
-						openTab = null;
-						onTabCloseContainerAction.run();
-					}
-				},
-				() -> openTab == null || !differentTabIsOpen(settingsTab) || isNotCovered(openTab, settingsTab, true),
-				() -> openTab == null || isNotCovered(openTab, settingsTab, false)
-		);
+			if (openTab != null && differentTabIsOpen(settingsTab)) {
+				openTab.close();
+			}
+			openTab = settingsTab;
+			onTabOpenContainerAction.run();
+		}, () -> {
+			if (openTab != null) {
+				openTab = null;
+				onTabCloseContainerAction.run();
+			}
+		}, () -> openTab == null || !differentTabIsOpen(settingsTab) || isNotCovered(openTab, settingsTab, true),
+				() -> openTab == null || isNotCovered(openTab, settingsTab, false));
 		return settingsTab;
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		PoseStack pose = guiGraphics.pose();
-		pose.pushPose();
-		pose.translate(0,0, -11);
+	protected void extractWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		children.forEach(child -> {
 			if (child != openTab) {
-				child.render(guiGraphics, mouseX, mouseY, partialTicks);
+				child.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 			}
 		});
-		pose.popPose();
 
 		if (openTab != null) {
-			openTab.render(guiGraphics, mouseX, mouseY, partialTicks);
+			openTab.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 		}
-		RenderSystem.enableDepthTest();
 	}
 
 	private boolean isNotCovered(T open, Tab t, boolean checkFullyCovered) {
@@ -83,13 +73,13 @@ public abstract class SettingsTabControl<C extends AbstractContainerScreen<?>, T
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
-		//noop
+	protected void extractBg(GuiGraphicsExtractor guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
+		// noop
 	}
 
 	@Override
-	public void renderTooltip(Screen screen, GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		children.forEach(tab -> tab.renderTooltip(screen, guiGraphics, mouseX, mouseY));
+	public void extractTooltip(Screen screen, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+		children.forEach(tab -> tab.extractTooltip(screen, guiGraphics, mouseX, mouseY));
 	}
 
 	protected int getTopY() {
@@ -134,6 +124,6 @@ public abstract class SettingsTabControl<C extends AbstractContainerScreen<?>, T
 
 	@Override
 	public void updateNarration(NarrationElementOutput narrationElementOutput) {
-		//noop
+		// noop
 	}
 }

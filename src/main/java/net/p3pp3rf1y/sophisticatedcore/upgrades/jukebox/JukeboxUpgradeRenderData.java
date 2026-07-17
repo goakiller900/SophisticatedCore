@@ -24,6 +24,6 @@ public class JukeboxUpgradeRenderData implements IUpgradeRenderData {
 	}
 
 	public static JukeboxUpgradeRenderData deserializeNBT(CompoundTag nbt) {
-		return new JukeboxUpgradeRenderData(nbt.getBoolean("playing"));
+		return new JukeboxUpgradeRenderData(nbt.getBooleanOr("playing", false));
 	}
 }

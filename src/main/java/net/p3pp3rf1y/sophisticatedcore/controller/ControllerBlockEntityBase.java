@@ -1,6 +1,7 @@
 package net.p3pp3rf1y.sophisticatedcore.controller;
 
-import io.github.fabricators_of_create.porting_lib.transfer.item.SlottedStackStorage;
+import com.mojang.serialization.Codec;
+import net.p3pp3rf1y.sophisticatedcore.inventory.SlottedStackStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
@@ -19,6 +20,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.p3pp3rf1y.sophisticatedcore.SophisticatedCore;
 import net.p3pp3rf1y.sophisticatedcore.api.IStorageWrapper;
 import net.p3pp3rf1y.sophisticatedcore.inventory.IItemHandlerSimpleInserter;
@@ -103,7 +106,7 @@ public abstract class ControllerBlockEntityBase extends BlockEntity implements I
 	public void searchAndAddBoundables() {
 		Set<BlockPos> positionsToCheck = new HashSet<>();
 		for (Direction dir : Direction.values()) {
-			positionsToCheck.add(getBlockPos().offset(dir.getNormal()));
+			positionsToCheck.add(getBlockPos().relative(dir));
 		}
 		searchAndAddBoundables(positionsToCheck, false);
 	}
@@ -188,7 +191,7 @@ public abstract class ControllerBlockEntityBase extends BlockEntity implements I
 
 	private void addUncheckedPositionsAround(Set<BlockPos> positionsToCheck, Set<BlockPos> positionsChecked, BlockPos currentPos) {
 		for (Direction dir : Direction.values()) {
-			BlockPos pos = currentPos.offset(dir.getNormal());
+			BlockPos pos = currentPos.relative(dir);
 			if (!positionsChecked.contains(pos) && ((!storagePositions.contains(pos) && !connectingBlocks.contains(pos) && !nonConnectingBlocks.contains(pos)) || linkedBlocks.contains(pos)) && isWithinRange(pos)) {
 				positionsToCheck.add(pos);
 			}
@@ -442,7 +445,7 @@ public abstract class ControllerBlockEntityBase extends BlockEntity implements I
 
 		Set<BlockPos> positionsToCheck = new HashSet<>();
 		for (Direction dir : Direction.values()) {
-			BlockPos offsetPos = getBlockPos().offset(dir.getNormal());
+			BlockPos offsetPos = getBlockPos().relative(dir);
 			if (toVerify.contains(offsetPos)) {
 				positionsToCheck.add(offsetPos);
 			}
@@ -482,7 +485,7 @@ public abstract class ControllerBlockEntityBase extends BlockEntity implements I
 				toVerify.remove(posToCheck);
 				if (h.canConnectStorages()) {
 					for (Direction dir : Direction.values()) {
-						BlockPos pos = posToCheck.offset(dir.getNormal());
+					BlockPos pos = posToCheck.relative(dir);
 						if (!positionsChecked.contains(pos) && toVerify.contains(pos)) {
 							positionsToCheck.add(pos);
 						}
@@ -807,10 +810,14 @@ public abstract class ControllerBlockEntityBase extends BlockEntity implements I
 	}
 
 	@Override
-	protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-		super.saveAdditional(tag, registries);
-
-		saveData(tag);
+	protected void saveAdditional(ValueOutput output) {
+		super.saveAdditional(output);
+		storagePositions.stream().map(BlockPos::asLong).forEach(output.list("storagePositions", Codec.LONG)::add);
+		connectingBlocks.stream().map(BlockPos::asLong).forEach(output.list("connectingBlocks", Codec.LONG)::add);
+		nonConnectingBlocks.stream().map(BlockPos::asLong).forEach(output.list("nonConnectingBlocks", Codec.LONG)::add);
+		linkedBlocks.stream().map(BlockPos::asLong).forEach(output.list("linkedBlocks", Codec.LONG)::add);
+		baseIndexes.forEach(output.list("baseIndexes", Codec.INT)::add);
+		output.putInt("totalSlots", totalSlots);
 	}
 
 	private CompoundTag saveData(CompoundTag tag) {
@@ -825,15 +832,14 @@ public abstract class ControllerBlockEntityBase extends BlockEntity implements I
 	}
 
 	@Override
-	public void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-		super.loadAdditional(tag, registries);
-
-		storagePositions = NBTHelper.getCollection(tag, "storagePositions", Tag.TAG_LONG, t -> Optional.of(BlockPos.of(((LongTag) t).getAsLong())), ArrayList::new).orElseGet(ArrayList::new);
-		connectingBlocks = NBTHelper.getCollection(tag, "connectingBlocks", Tag.TAG_LONG, t -> Optional.of(BlockPos.of(((LongTag) t).getAsLong())), LinkedHashSet::new).orElseGet(LinkedHashSet::new);
-		nonConnectingBlocks = NBTHelper.getCollection(tag, "nonConnectingBlocks", Tag.TAG_LONG, t -> Optional.of(BlockPos.of(((LongTag) t).getAsLong())), LinkedHashSet::new).orElseGet(LinkedHashSet::new);
-		baseIndexes = NBTHelper.getCollection(tag, "baseIndexes", Tag.TAG_INT, t -> Optional.of(((IntTag) t).getAsInt()), ArrayList::new).orElseGet(ArrayList::new);
-		totalSlots = tag.getInt("totalSlots");
-		linkedBlocks = NBTHelper.getCollection(tag, "linkedBlocks", Tag.TAG_LONG, t -> Optional.of(BlockPos.of(((LongTag) t).getAsLong())), LinkedHashSet::new).orElseGet(LinkedHashSet::new);
+	protected void loadAdditional(ValueInput input) {
+		super.loadAdditional(input);
+		storagePositions = input.listOrEmpty("storagePositions", Codec.LONG).stream().map(BlockPos::of).collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+		connectingBlocks = input.listOrEmpty("connectingBlocks", Codec.LONG).stream().map(BlockPos::of).collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+		nonConnectingBlocks = input.listOrEmpty("nonConnectingBlocks", Codec.LONG).stream().map(BlockPos::of).collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+		baseIndexes = input.listOrEmpty("baseIndexes", Codec.INT).stream().collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+		totalSlots = input.getIntOr("totalSlots", 0);
+		linkedBlocks = input.listOrEmpty("linkedBlocks", Codec.LONG).stream().map(BlockPos::of).collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	@Override

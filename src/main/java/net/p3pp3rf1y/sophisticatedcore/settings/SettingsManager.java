@@ -47,7 +47,7 @@ public class SettingsManager {
 	}
 
 	public static CompoundTag getPlayerSettingsTag(Player player, String playerSettingsTagName) {
-		return player.getSophisticatedCustomData().getCompound(playerSettingsTagName);
+		return player.getSophisticatedCustomData().getCompoundOrEmpty(playerSettingsTagName);
 	}
 
 	public static void setPlayerSettingsTag(Player player, String playerSettingsTagName, CompoundTag settingsNbt) {

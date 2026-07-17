@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.compat.jei;
 
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.fabric.constants.FabricTypes;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler;

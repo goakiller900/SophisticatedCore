@@ -21,7 +21,7 @@ public class NoSortSettingsContainer extends SettingsContainerBase<NoSortSetting
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains(ACTION_TAG)) {
-			switch (data.getString(ACTION_TAG)) {
+			switch (data.getStringOr(ACTION_TAG, "")) {
 				case SELECT_ALL_ACTION -> selectAllSlots();
 				case UNSELECT_ALL_ACTION -> unselectAllSlots();
 				default -> {
@@ -29,11 +29,11 @@ public class NoSortSettingsContainer extends SettingsContainerBase<NoSortSetting
 				}
 			}
 		} else if (data.contains(SELECT_SLOT_TAG)) {
-			selectSlot(data.getInt(SELECT_SLOT_TAG));
+			selectSlot(data.getIntOr(SELECT_SLOT_TAG, 0));
 		} else if (data.contains(UNSELECT_SLOT_TAG)) {
-			unselectSlot(data.getInt(UNSELECT_SLOT_TAG));
+			unselectSlot(data.getIntOr(UNSELECT_SLOT_TAG, 0));
 		} else if (data.contains(COLOR_TAG)) {
-			setColor(DyeColor.byId(data.getInt(COLOR_TAG)));
+			setColor(DyeColor.byId(data.getIntOr(COLOR_TAG, 0)));
 		}
 	}
 

@@ -11,7 +11,7 @@ import net.p3pp3rf1y.sophisticatedcore.SophisticatedCore;
 import net.p3pp3rf1y.sophisticatedcore.compat.litematica.LitematicaHelper;
 
 public record UpdateMaterialListPayload(int requestedContents) implements CustomPacketPayload {
-	public static final Type<UpdateMaterialListPayload> TYPE = new Type<>(SophisticatedCore.getRL("litematica_update_material_list"));
+	public static final Type<UpdateMaterialListPayload> TYPE = new Type<>(SophisticatedCore.getIdentifier("litematica_update_material_list"));
 	public static final StreamCodec<ByteBuf, UpdateMaterialListPayload> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.INT, UpdateMaterialListPayload::requestedContents,
 			UpdateMaterialListPayload::new

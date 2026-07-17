@@ -1,11 +1,11 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import javax.annotation.Nullable;
 
 public interface IUpgradeCountLimitConfig {
-	int getMaxUpgradesPerStorage(String storageType, @Nullable ResourceLocation upgradeRegistryName);
+	int getMaxUpgradesPerStorage(String storageType, @Nullable Identifier upgradeRegistryName);
 
 	int getMaxUpgradesInGroupPerStorage(String storageType, UpgradeGroup upgradeGroup);
 }

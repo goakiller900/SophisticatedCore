@@ -2,7 +2,7 @@ package net.p3pp3rf1y.sophisticatedcore.event.common;
 
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.fabricmc.fabric.api.event.Event;
@@ -26,10 +26,10 @@ public interface MobSpawnEvents {
         private final Entity entity;
         private final ServerLevelAccessor level;
         private final DifficultyInstance difficulty;
-        private final MobSpawnType spawnType;
+        private final EntitySpawnReason spawnType;
         private final SpawnGroupData spawnGroupData;
 
-        public FinalizeSpawn(Entity entity, ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        public FinalizeSpawn(Entity entity, ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason spawnType, @Nullable SpawnGroupData spawnGroupData) {
             this.entity = entity;
             this.level = level;
             this.difficulty = difficulty;
@@ -49,7 +49,7 @@ public interface MobSpawnEvents {
             return difficulty;
         }
 
-        public MobSpawnType getMobSpawnType() {
+        public EntitySpawnReason getMobSpawnType() {
             return spawnType;
         }
 

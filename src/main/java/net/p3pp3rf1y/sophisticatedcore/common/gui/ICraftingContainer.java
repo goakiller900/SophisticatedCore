@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.common.gui;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -12,7 +12,7 @@ public interface ICraftingContainer {
 
 	Container getCraftMatrix();
 
-	void setRecipeUsed(ResourceLocation recipeId);
+	void setRecipeUsed(Identifier recipeId);
 
 	RecipeType<?> getRecipeType();
 }

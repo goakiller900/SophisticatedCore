@@ -4,7 +4,7 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -12,6 +12,7 @@ import net.p3pp3rf1y.sophisticatedcore.inventory.InventoryHandler;
 import net.p3pp3rf1y.sophisticatedcore.inventory.ItemStackKey;
 import net.p3pp3rf1y.sophisticatedcore.settings.ISettingsCategory;
 import net.p3pp3rf1y.sophisticatedcore.util.NBTHelper;
+import net.p3pp3rf1y.sophisticatedcore.util.CodecHelper;
 import net.p3pp3rf1y.sophisticatedcore.util.RegistryHelper;
 
 import java.util.*;
@@ -49,12 +50,12 @@ public class MemorySettingsCategory implements ISettingsCategory<MemorySettingsC
 	private void deserialize() {
 		NBTHelper.getMap(categoryNbt, SLOT_FILTER_ITEMS_TAG,
 						Integer::valueOf,
-						(k, v) -> BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(v.getAsString())))
+						(k, v) -> v.asString().flatMap(value -> BuiltInRegistries.ITEM.getOptional(Identifier.parse(value))))
 				.ifPresent(map -> map.forEach(this::addSlotItem));
 
 		NBTHelper.getMap(categoryNbt, SLOT_FILTER_STACKS_TAG,
 						Integer::valueOf,
-						(k, v) -> v instanceof CompoundTag tag ? RegistryHelper.getRegistryAccess().flatMap(registryAccess -> ItemStack.parse(registryAccess, tag)) : Optional.empty())
+						(k, v) -> v instanceof CompoundTag tag ? RegistryHelper.getRegistryAccess().flatMap(registryAccess -> CodecHelper.decodeItemStack(registryAccess, tag)) : Optional.empty())
 				.ifPresent(map -> map.forEach(this::addSlotStack));
 		ignoreNbt = NBTHelper.getBoolean(categoryNbt, IGNORE_NBT_TAG).orElse(true);
 	}
@@ -238,7 +239,7 @@ public class MemorySettingsCategory implements ISettingsCategory<MemorySettingsC
 	private void serializeFilterItems() {
 		NBTHelper.putMap(categoryNbt, SLOT_FILTER_ITEMS_TAG, slotFilterItems, String::valueOf, i -> StringTag.valueOf(BuiltInRegistries.ITEM.getKey(i).toString()));
 		NBTHelper.putMap(categoryNbt, SLOT_FILTER_STACKS_TAG, slotFilterStacks, String::valueOf,
-				isk -> RegistryHelper.getRegistryAccess().map(registryAccess -> isk.stack().saveOptional(registryAccess)).orElse(new CompoundTag()));
+				isk -> RegistryHelper.getRegistryAccess().map(registryAccess -> CodecHelper.encodeItemStack(registryAccess, isk.stack())).orElse(new CompoundTag()));
 		saveNbt.accept(categoryNbt);
 	}
 

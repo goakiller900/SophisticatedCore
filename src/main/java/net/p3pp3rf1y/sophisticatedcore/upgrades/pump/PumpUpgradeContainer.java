@@ -29,11 +29,11 @@ public class PumpUpgradeContainer extends UpgradeContainerBase<PumpUpgradeWrappe
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains(DATA_IS_INPUT)) {
-			setIsInput(data.getBoolean(DATA_IS_INPUT));
+			setIsInput(data.getBooleanOr(DATA_IS_INPUT, false));
 		} else if (data.contains(DATA_INTERACT_WITH_HAND)) {
-			setInteractWithHand(data.getBoolean(DATA_INTERACT_WITH_HAND));
+			setInteractWithHand(data.getBooleanOr(DATA_INTERACT_WITH_HAND, false));
 		} else if (data.contains(DATA_INTERACT_WITH_WORLD)) {
-			setInteractWithWorld(data.getBoolean(DATA_INTERACT_WITH_WORLD));
+			setInteractWithWorld(data.getBooleanOr(DATA_INTERACT_WITH_WORLD, false));
 		}
 		fluidFilterContainer.handlePacket(data);
 	}

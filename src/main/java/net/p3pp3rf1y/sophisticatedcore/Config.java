@@ -1,9 +1,8 @@
 package net.p3pp3rf1y.sophisticatedcore;
 
-import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeModConfigEvents;
-import com.electronwill.nightconfig.core.io.WritingException;
+import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -52,7 +51,7 @@ public class Config {
 		public final EnabledItems enabledItems;
 
 		public void initListeners() {
-			NeoForgeModConfigEvents.reloading(SophisticatedCore.MOD_ID).register(this::onConfigReload);
+			ModConfigEvents.reloading(SophisticatedCore.MOD_ID).register(this::onConfigReload);
 		}
 
 		@SuppressWarnings("unused") //need the Event parameter for forge reflection to understand what event this listens to
@@ -76,7 +75,7 @@ public class Config {
 		public static class EnabledItems {
 			private final ModConfigSpec.ConfigValue<List<String>> itemsEnableList;
 			private final Runnable onConfigChange;
-			private final Map<ResourceLocation, Boolean> enabledMap = new ConcurrentHashMap<>();
+			private final Map<Identifier, Boolean> enabledMap = new ConcurrentHashMap<>();
 
 			EnabledItems(ModConfigSpec.Builder builder, Runnable onConfigChange) {
 				itemsEnableList = builder.comment("Disable / enable any items here (disables their recipes)").define("enabledItems", new ArrayList<>());
@@ -87,7 +86,7 @@ public class Config {
 				return RegistryHelper.getRegistryName(BuiltInRegistries.ITEM, item).map(this::isItemEnabled).orElse(false);
 			}
 
-			public boolean isItemEnabled(ResourceLocation itemRegistryName) {
+			public boolean isItemEnabled(Identifier itemRegistryName) {
 				if (!COMMON_SPEC.isLoaded()) {
 					return true;
 				}
@@ -100,7 +99,7 @@ public class Config {
 				});
 			}
 
-			private void addEnabledItemToConfig(ResourceLocation itemRegistryName) {
+			private void addEnabledItemToConfig(Identifier itemRegistryName) {
 				List<String> list = itemsEnableList.get();
 				list.add(itemRegistryName + "|true");
 				itemsEnableList.set(list);
@@ -111,7 +110,7 @@ public class Config {
 				for (String itemEnabled : itemsEnableList.get()) {
 					String[] data = itemEnabled.split("\\|");
 					if (data.length == 2) {
-						enabledMap.put(ResourceLocation.parse(data[0]), Boolean.valueOf(data[1]));
+						enabledMap.put(Identifier.parse(data[0]), Boolean.valueOf(data[1]));
 					} else {
 						SophisticatedCore.LOGGER.error("Wrong data for enabledItems - expected registry name|true/false when {} was provided", itemEnabled);
 					}

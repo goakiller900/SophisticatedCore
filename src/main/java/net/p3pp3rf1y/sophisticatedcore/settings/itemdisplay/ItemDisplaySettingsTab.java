@@ -1,19 +1,23 @@
 package net.p3pp3rf1y.sophisticatedcore.settings.itemdisplay;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.item.TrackingItemStackRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.level.block.state.BlockState;
-import net.p3pp3rf1y.sophisticatedcore.api.IDisplaySideStorage;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.SettingsScreen;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.controls.*;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.*;
+import net.p3pp3rf1y.sophisticatedcore.client.render.ItemDisplayPreviewRenderState;
+import net.p3pp3rf1y.sophisticatedcore.extensions.client.gui.SophisticatedGuiGraphicsExtractor;
 import net.p3pp3rf1y.sophisticatedcore.renderdata.DisplaySide;
 import net.p3pp3rf1y.sophisticatedcore.settings.ColorToggleButton;
 import net.p3pp3rf1y.sophisticatedcore.settings.SettingsTab;
+import org.joml.Matrix3x2f;
 
 import java.util.List;
 import java.util.Map;
@@ -25,36 +29,54 @@ import static net.p3pp3rf1y.sophisticatedcore.client.gui.utils.GuiHelper.DEFAULT
 public class ItemDisplaySettingsTab extends SettingsTab<ItemDisplaySettingsContainer> {
 	private static final TextureBlitData ICON = new TextureBlitData(GuiHelper.ICONS, Dimension.SQUARE_256, new UV(112, 64), Dimension.SQUARE_16);
 	private static final TextureBlitData SLOT_SELECTION = new TextureBlitData(GuiHelper.GUI_CONTROLS, Dimension.SQUARE_256, new UV(93, 0), Dimension.SQUARE_24);
+	private static final int BUTTON_SPACING = 2;
+	private static final int BUTTON_ROW_WIDTH = 4 * Dimension.SQUARE_16.width() + 3 * BUTTON_SPACING + 2;
+	private static final Dimension PREVIEW_DIMENSION = new Dimension(BUTTON_ROW_WIDTH, BUTTON_ROW_WIDTH);
 	private static final List<Component> ROTATE_TOOLTIP = new ImmutableList.Builder<Component>()
 			.add(Component.translatable(TranslationHelper.INSTANCE.translSettingsButton("rotate")))
 			.addAll(TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsButton("rotate_detail"), null, ChatFormatting.GRAY))
 			.build();
-	private static final TextureBlitData ROTATE_FOREGROUND = new TextureBlitData(GuiHelper.ICONS, new Position(1, 1), Dimension.SQUARE_256, new UV(128, 64), Dimension.SQUARE_16);
-	public static final ButtonDefinition ROTATE = new ButtonDefinition(Dimension.SQUARE_16, DEFAULT_BUTTON_BACKGROUND, DEFAULT_BUTTON_HOVERED_BACKGROUND, ROTATE_FOREGROUND);
+	private static final TextureBlitData ROTATE_FOREGROUND = new TextureBlitData(GuiHelper.ICONS, new Position(1, 1), Dimension.SQUARE_256, new UV(128, 64),
+			Dimension.SQUARE_16);
+	public static final ButtonDefinition ROTATE = new ButtonDefinition(Dimension.SQUARE_16, DEFAULT_BUTTON_BACKGROUND, DEFAULT_BUTTON_HOVERED_BACKGROUND,
+			ROTATE_FOREGROUND);
+	private static final TextureBlitData Z_OFFSET_FOREGROUND = new TextureBlitData(GuiHelper.ICONS, new Position(1, 1), Dimension.SQUARE_256, new UV(96, 112),
+			Dimension.SQUARE_16);
+	public static final ButtonDefinition Z_OFFSET = new ButtonDefinition(Dimension.SQUARE_16, DEFAULT_BUTTON_BACKGROUND, DEFAULT_BUTTON_HOVERED_BACKGROUND,
+			Z_OFFSET_FOREGROUND);
 
-	private static final ButtonDefinition.Toggle<DisplaySide> DISPLAY_SIDE = ButtonDefinitions.createToggleButtonDefinition(
-			Map.of(
-					DisplaySide.FRONT, GuiHelper.getButtonStateData(new UV(144, 64), Dimension.SQUARE_16, new Position(1, 1),
-							TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsButton("display_side_front"), null)),
-					DisplaySide.LEFT, GuiHelper.getButtonStateData(new UV(160, 64), Dimension.SQUARE_16, new Position(1, 1),
-							TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsButton("display_side_left"), null)),
-					DisplaySide.RIGHT, GuiHelper.getButtonStateData(new UV(176, 64), Dimension.SQUARE_16, new Position(1, 1),
-							TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsButton("display_side_right"), null))
-			));
+	private static final ButtonDefinition.Toggle<DisplaySide> DISPLAY_SIDE = ButtonDefinitions.createToggleButtonDefinition(Map.of(DisplaySide.FRONT,
+			GuiHelper.getButtonStateData(new UV(144, 64), Dimension.SQUARE_16, new Position(1, 1),
+					TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsButton("display_side_front"), null)),
+			DisplaySide.LEFT,
+			GuiHelper.getButtonStateData(new UV(160, 64), Dimension.SQUARE_16, new Position(1, 1),
+					TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsButton("display_side_left"), null)),
+			DisplaySide.RIGHT, GuiHelper.getButtonStateData(new UV(176, 64), Dimension.SQUARE_16, new Position(1, 1),
+					TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsButton("display_side_right"), null))));
 	private int currentSelectedSlot = -1;
+	private final ItemDisplayPreview preview;
 
 	public ItemDisplaySettingsTab(ItemDisplaySettingsContainer container, Position position, SettingsScreen screen) {
 		super(container, position, screen, Component.translatable(TranslationHelper.INSTANCE.translSettings(ItemDisplaySettingsCategory.NAME)),
 				new ImmutableList.Builder<Component>()
 						.add(Component.translatable(TranslationHelper.INSTANCE.translSettingsTooltip(ItemDisplaySettingsCategory.NAME)))
-						.addAll(TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsTooltip(ItemDisplaySettingsCategory.NAME) + "_detail", null, ChatFormatting.GRAY))
+						.addAll(TranslationHelper.INSTANCE.getTranslatedLines(
+								TranslationHelper.INSTANCE.translSettingsTooltip(ItemDisplaySettingsCategory.NAME) + "_detail", null, ChatFormatting.GRAY))
 						.build(),
 				new ImmutableList.Builder<Component>()
 						.add(Component.translatable(TranslationHelper.INSTANCE.translSettingsTooltip(ItemDisplaySettingsCategory.NAME)))
-						.addAll(TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsTooltip(ItemDisplaySettingsCategory.NAME) + "_open_detail", null, ChatFormatting.GRAY))
+						.addAll(TranslationHelper.INSTANCE.getTranslatedLines(
+								TranslationHelper.INSTANCE.translSettingsTooltip(ItemDisplaySettingsCategory.NAME) + "_open_detail", null, ChatFormatting.GRAY))
 						.build(),
 				onTabIconClicked -> new ImageButton(new Position(position.x() + 1, position.y() + 4), Dimension.SQUARE_16, ICON, onTabIconClicked));
-		addHideableChild(new Button(new Position(x + 3, y + 24), ROTATE, button -> {
+		int buttonX = x + 3;
+		int buttonY = y + 24 + PREVIEW_DIMENSION.height() + 1;
+		preview = addHideableChild(new ItemDisplayPreview(new Position(x + 3, y + 24)));
+		if (showSlotColorSelection()) {
+			addHideableChild(new ColorToggleButton(new Position(buttonX, buttonY), container::getColor, container::setColor));
+			buttonX += Dimension.SQUARE_16.width() + BUTTON_SPACING;
+		}
+		addHideableChild(new Button(new Position(buttonX, buttonY), ROTATE, button -> {
 			if (button == 0) {
 				container.rotateClockwise(currentSelectedSlot);
 			} else if (button == 1) {
@@ -66,28 +88,35 @@ public class ItemDisplaySettingsTab extends SettingsTab<ItemDisplaySettingsConta
 				return ROTATE_TOOLTIP;
 			}
 		});
-		addHideableChild(new ColorToggleButton(new Position(x + 21, y + 24), container::getColor, container::setColor));
+		buttonX += Dimension.SQUARE_16.width() + BUTTON_SPACING;
 		if (showSideSelection()) {
-			addHideableChild(new ToggleButton<>(new Position(x + 39, y + 24), DISPLAY_SIDE, button -> {
+			addHideableChild(new ToggleButton<>(new Position(buttonX, buttonY), DISPLAY_SIDE, button -> {
 				if (button == 0) {
 					container.setDisplaySide(container.getDisplaySide().next());
 				} else if (button == 1) {
 					container.setDisplaySide(container.getDisplaySide().previous());
 				}
+				preview.updateTargetRotation();
 			}, container::getDisplaySide));
 		}
 		currentSelectedSlot = getSettingsContainer().getFirstSelectedSlot();
+		preview.updateTargetRotation();
 	}
 
 	@Override
 	public Optional<Integer> getSlotOverlayColor(int slotNumber, boolean templateLoadHovered) {
-		if (templateLoadHovered) {
-			return getSettingsContainer().getSettingsContainer().getSelectedTemplatesCategory(ItemDisplaySettingsCategory.class)
-					.filter(c -> c.getSlots().contains(slotNumber))
-					.map(category -> category.getColor().getTextureDiffuseColor() & 0x00_FFFFFF | (80 << 24));
+		if (!getSettingsContainer().canDeselectSlots()) {
+			return Optional.empty();
 		}
 
-		return getSettingsContainer().isSlotSelected(slotNumber) ? Optional.of(getSettingsContainer().getColor().getTextureDiffuseColor() | (80 << 24)) : Optional.empty();
+		if (templateLoadHovered) {
+			return getSettingsContainer().getSettingsContainer().getSelectedTemplatesCategory(ItemDisplaySettingsCategory.class)
+					.filter(c -> c.getSlots().contains(slotNumber)).map(category -> category.getColor().getTextureDiffuseColor() & 0x00_FFFFFF | (80 << 24));
+		}
+
+		return getSettingsContainer().isSlotSelected(slotNumber)
+				? Optional.of(getSettingsContainer().getColor().getTextureDiffuseColor() | (80 << 24))
+				: Optional.empty();
 	}
 
 	@Override
@@ -97,7 +126,7 @@ public class ItemDisplaySettingsTab extends SettingsTab<ItemDisplaySettingsConta
 			if (getSettingsContainer().isSlotSelected(slot.index)) {
 				currentSelectedSlot = slot.index;
 			}
-		} else if (mouseButton == 1) {
+		} else if (mouseButton == 1 && getSettingsContainer().canDeselectSlots()) {
 			getSettingsContainer().unselectSlot(slot.index);
 			if (!getSettingsContainer().isSlotSelected(slot.index) && currentSelectedSlot == slot.index) {
 				currentSelectedSlot = getSettingsContainer().getFirstSelectedSlot();
@@ -106,14 +135,10 @@ public class ItemDisplaySettingsTab extends SettingsTab<ItemDisplaySettingsConta
 	}
 
 	@Override
-	public void renderExtra(GuiGraphics guiGraphics, Slot slot) {
-		super.renderExtra(guiGraphics, slot);
+	public void extractExtra(GuiGraphicsExtractor guiGraphics, Slot slot) {
+		super.extractExtra(guiGraphics, slot);
 		if (isOpen && slot.index == currentSelectedSlot) {
-			RenderSystem.disableDepthTest();
-			RenderSystem.colorMask(true, true, true, false);
 			GuiHelper.blit(guiGraphics, slot.x - 4, slot.y - 4, SLOT_SELECTION);
-			RenderSystem.colorMask(true, true, true, true);
-			RenderSystem.enableDepthTest();
 		}
 	}
 
@@ -121,19 +146,77 @@ public class ItemDisplaySettingsTab extends SettingsTab<ItemDisplaySettingsConta
 	public int getItemRotation(int slotIndex, boolean templateLoadHovered) {
 		if (templateLoadHovered) {
 			return getSettingsContainer().getSettingsContainer().getSelectedTemplatesCategory(ItemDisplaySettingsCategory.class)
-					.filter(c -> c.getSlots().contains(slotIndex))
-					.map(category -> category.getRotation(slotIndex))
-					.orElse(0);
+					.filter(c -> c.getSlots().contains(slotIndex)).map(category -> category.getRotation(slotIndex)).orElse(0);
 		}
 
 		return getSettingsContainer().getRotation(slotIndex);
 	}
 
 	private boolean showSideSelection() {
-		if (minecraft.level == null) {
-			return false;
+		return getSettingsContainer().supportsSideSelection();
+	}
+
+	private boolean showSlotColorSelection() {
+		return getSettingsContainer().canDeselectSlots();
+	}
+
+	private List<Component> getZOffsetTooltip() {
+		return new ImmutableList.Builder<Component>().add(Component.translatable(TranslationHelper.INSTANCE.translSettingsButton("z_offset"))).addAll(
+				TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsButton("z_offset_detail"), null, ChatFormatting.GRAY))
+				.build();
+	}
+
+	public void renderDefaultItemDisplaySettingsPreview(GuiGraphicsExtractor guiGraphics, int x, int y, int width, int height,
+			ItemDisplaySettingsContainer container, int selectedSlot, float xAxisRotation, float yAxisRotation) {
+		IItemDisplaySettingsPreviewProvider provider = getPreviewProvider();
+		provider.getItemDisplaySettingsPreviewStack(screen, container, selectedSlot).ifPresent(stack -> renderItemDisplayPreviewItem(guiGraphics, stack, x, y,
+				width, height, xAxisRotation, provider.getItemDisplayPreviewYAxisRotation(yAxisRotation), provider.getItemDisplayPreviewScaleMultiplier()));
+	}
+
+	public void renderItemDisplayPreviewItem(GuiGraphicsExtractor guiGraphics, ItemStack stack, int x, int y, int width, int height, float xAxisRotation,
+			float yAxisRotation, float scaleMultiplier) {
+		if (stack.isEmpty()) {
+			return;
 		}
-		BlockState state = minecraft.level.getBlockState(getSettingsContainer().getSettingsContainer().getBlockPosition());
-		return state.getBlock() instanceof IDisplaySideStorage displaySideStorage && displaySideStorage.canChangeDisplaySide(state);
+
+		TrackingItemStackRenderState renderState = new TrackingItemStackRenderState();
+		Minecraft.getInstance().getItemModelResolver().updateForTopItem(renderState, stack, ItemDisplayContext.NONE, null, null, 0);
+		if (renderState.isEmpty()) {
+			return;
+		}
+
+		float scale = (Math.min(width, height) - 16) * scaleMultiplier / 16F;
+		((SophisticatedGuiGraphicsExtractor) guiGraphics).sophisticatedCore_addPictureInPicture(
+				new ItemDisplayPreviewRenderState(renderState, new Matrix3x2f(guiGraphics.pose()), null,
+						x, y, x + width, y + height, xAxisRotation, yAxisRotation, scale));
+	}
+
+	private IItemDisplaySettingsPreviewProvider getPreviewProvider() {
+		return screen.getItemDisplaySettingsPreviewProvider();
+	}
+
+	private class ItemDisplayPreview extends RotatablePreviewWidget {
+		protected ItemDisplayPreview(Position position) {
+			super(position, PREVIEW_DIMENSION);
+		}
+
+		private void updateTargetRotation() {
+			switch (getSettingsContainer().getDisplaySide()) {
+				case FRONT -> setTargetRotations(30, 45);
+				case LEFT -> setTargetRotations(30, 135);
+				case RIGHT -> setTargetRotations(30, -45);
+			}
+		}
+
+		@Override
+		protected void renderPreview(GuiGraphicsExtractor guiGraphics, int x, int y, int width, int height, float xAxisRotation, float yAxisRotation,
+				float partialTicks) {
+			IItemDisplaySettingsPreviewProvider provider = getPreviewProvider();
+			if (!provider.renderItemDisplaySettingsPreview(ItemDisplaySettingsTab.this, screen, guiGraphics, x, y, width, height, getSettingsContainer(),
+					currentSelectedSlot, xAxisRotation, yAxisRotation, partialTicks)) {
+				renderDefaultItemDisplaySettingsPreview(guiGraphics, x, y, width, height, getSettingsContainer(), currentSelectedSlot, xAxisRotation,
+						yAxisRotation);
+			}
+		}
 	}
 }

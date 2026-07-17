@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
 
 public record SyncPlayerSettingsPayload(String playerTagName,
 										@Nullable CompoundTag settingsNbt) implements CustomPacketPayload {
-	public static final Type<SyncPlayerSettingsPayload> TYPE = new Type<>(SophisticatedCore.getRL("sync_player_settings"));
+	public static final Type<SyncPlayerSettingsPayload> TYPE = new Type<>(SophisticatedCore.getIdentifier("sync_player_settings"));
 	public static final StreamCodec<ByteBuf, SyncPlayerSettingsPayload> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.STRING_UTF8,
 			SyncPlayerSettingsPayload::playerTagName,

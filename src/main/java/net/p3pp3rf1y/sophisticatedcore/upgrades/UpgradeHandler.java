@@ -1,8 +1,8 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades;
 
-import io.github.fabricators_of_create.porting_lib.transfer.callbacks.TransactionCallback;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandlerSlot;
+import net.p3pp3rf1y.sophisticatedcore.util.TransactionCallback;
+import net.p3pp3rf1y.sophisticatedcore.inventory.ItemStackHandler;
+import net.p3pp3rf1y.sophisticatedcore.inventory.ItemStackHandlerSlot;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
@@ -49,7 +49,7 @@ public class UpgradeHandler extends ItemStackHandler {
 		this.storageWrapper = storageWrapper;
 		this.contentsSaveHandler = contentsSaveHandler;
 		this.onInvalidateUpgradeCaches = onInvalidateUpgradeCaches;
-		RegistryHelper.getRegistryAccess().ifPresent(registryAccess -> deserializeNBT(registryAccess, contentsNbt.getCompound(UPGRADE_INVENTORY_TAG)));
+		RegistryHelper.getRegistryAccess().ifPresent(registryAccess -> deserializeNBT(registryAccess, contentsNbt.getCompoundOrEmpty(UPGRADE_INVENTORY_TAG)));
 		if (SophisticatedCore.isLogicalServerThread() && storageWrapper.getRenderInfo().getUpgradeItems().size() != this.getSlotCount()) {
 			setRenderUpgradeItems();
 		}

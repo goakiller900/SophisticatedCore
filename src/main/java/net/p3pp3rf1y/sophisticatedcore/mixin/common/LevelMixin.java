@@ -24,16 +24,13 @@ public abstract class LevelMixin  implements LevelAccessor, SophisticatedLevel {
 	@Unique
 	private final ArrayList<BlockEntity> sophisticatedCore_pendingFreshBlockEntities = new ArrayList<>();
 
-	@Inject(method = "tickBlockEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V", shift = At.Shift.AFTER))
-	public void port_lib$pendingBlockEntities(CallbackInfo ci) {
+	@Inject(method = "tickBlockEntities", at = @At("HEAD"))
+	private void sophisticatedCore_onBlockEntitiesLoad(CallbackInfo ci) {
 		if (!this.sophisticatedCore_pendingFreshBlockEntities.isEmpty()) {
 			this.sophisticatedCore_freshBlockEntities.addAll(this.sophisticatedCore_pendingFreshBlockEntities);
 			this.sophisticatedCore_pendingFreshBlockEntities.clear();
 		}
-	}
 
-	@Inject(method = "tickBlockEntities", at = @At(value = "INVOKE", target = "Ljava/util/List;isEmpty()Z"))
-	public void port_lib$onBlockEntitiesLoad(CallbackInfo ci) {
 		if (!this.sophisticatedCore_freshBlockEntities.isEmpty()) {
 			this.sophisticatedCore_freshBlockEntities.forEach(SophisticatedBlockEntity::sophisticatedCore_onLoad);
 			this.sophisticatedCore_freshBlockEntities.clear();

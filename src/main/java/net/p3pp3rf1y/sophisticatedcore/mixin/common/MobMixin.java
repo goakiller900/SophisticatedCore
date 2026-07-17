@@ -2,7 +2,7 @@ package net.p3pp3rf1y.sophisticatedcore.mixin.common;
 
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.p3pp3rf1y.sophisticatedcore.event.common.MobSpawnEvents;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Mob.class)
 public class MobMixin {
     @Inject(method = "finalizeSpawn", at = @At("RETURN"))
-    private void sophosticatedcore$afterFinalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, SpawnGroupData spawnGroupData, CallbackInfoReturnable<SpawnGroupData> cir) {
+    private void sophosticatedcore$afterFinalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason spawnType, SpawnGroupData spawnGroupData, CallbackInfoReturnable<SpawnGroupData> cir) {
         MobSpawnEvents.AFTER_FINALIZE_SPAWN.invoker().onAfterFinalizeSpawn(new MobSpawnEvents.FinalizeSpawn(MixinHelper.cast(this), level, difficulty, spawnType, spawnGroupData));
     }
 }

@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "sophisticatedcore:item/xp_bucket",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -16711936
+      }
+    ]
+  }
+}

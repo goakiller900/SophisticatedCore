@@ -7,8 +7,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.HashedStack;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
@@ -59,14 +60,14 @@ public abstract class SettingsContainerMenu<S extends IStorageWrapper> extends A
 
 	private final List<Slot> storageInventorySlots = new ArrayList<>();
 	public final NonNullList<ItemStack> lastGhostSlots = NonNullList.create();
-	public final NonNullList<ItemStack> remoteGhostSlots = NonNullList.create();
+	public final NonNullList<RemoteSlot> remoteGhostSlots = NonNullList.create();
 	private final Map<String, SettingsContainerBase<?>> settingsContainers = new LinkedHashMap<>();
 	private final TemplatePersistanceContainer templatePersistanceContainer;
 	public final List<Slot> ghostSlots = new ArrayList<>();
 	private boolean inventorySlotStackChanged = false;
 	private final Set<Integer> inaccessibleSlots = new HashSet<>();
 	private final Map<Integer, ItemStack> slotFilterItems = new HashMap<>();
-	private final Map<Integer, Pair<ResourceLocation, ResourceLocation>> emptySlotIcons = new HashMap<>();
+	private final Map<Integer, Identifier> emptySlotIcons = new HashMap<>();
 
 	protected SettingsContainerMenu(MenuType<?> menuType, int windowId, Player player, S storageWrapper) {
 		super(menuType, windowId);
@@ -118,7 +119,7 @@ public abstract class SettingsContainerMenu<S extends IStorageWrapper> extends A
 		slot.index = ghostSlots.size();
 		ghostSlots.add(slot);
 		lastGhostSlots.add(ItemStack.EMPTY);
-		remoteGhostSlots.add(ItemStack.EMPTY);
+		remoteGhostSlots.add(synchronizer != null ? synchronizer.createSlot() : RemoteSlot.PLACEHOLDER);
 		return slot;
 	}
 
@@ -164,13 +165,11 @@ public abstract class SettingsContainerMenu<S extends IStorageWrapper> extends A
 	@SuppressWarnings("java:S2177")
 	private void synchronizeSlotToRemote(int slotIndex, ItemStack slotStack, Supplier<ItemStack> slotStackCopy) {
 		if (!suppressRemoteUpdates) {
-			ItemStack remoteStack = remoteGhostSlots.get(slotIndex);
-			if (!ItemStack.matches(remoteStack, slotStack)) {
+			RemoteSlot remoteSlot = remoteGhostSlots.get(slotIndex);
+			if (!remoteSlot.matches(slotStack)) {
 				ItemStack stackCopy = slotStackCopy.get();
-				remoteGhostSlots.set(slotIndex, stackCopy);
-				if ((remoteStack.isEmpty() || slotStack.isEmpty())) {
-					inventorySlotStackChanged = true;
-				}
+				remoteSlot.force(stackCopy);
+				inventorySlotStackChanged = true;
 				if (synchronizer != null) {
 					synchronizer.sendSlotChange(this, slotIndex, stackCopy);
 				}
@@ -184,12 +183,17 @@ public abstract class SettingsContainerMenu<S extends IStorageWrapper> extends A
 
 	@Override
 	public void sendAllDataToRemote() {
+		NonNullList<ItemStack> remoteStacks = NonNullList.create();
 		for (int slotIndex = 0; slotIndex < ghostSlots.size(); slotIndex++) {
-			remoteGhostSlots.set(slotIndex, ghostSlots.get(slotIndex).getItem().copy());
+			ItemStack stack = ghostSlots.get(slotIndex).getItem().copy();
+			remoteGhostSlots.get(slotIndex).force(stack);
+			remoteStacks.add(stack);
 		}
 
 		if (synchronizer != null) {
-			synchronizer.sendInitialData(this, remoteGhostSlots, remoteCarried, new int[0]);
+			ItemStack carried = getCarried().copy();
+			remoteCarried.force(carried);
+			synchronizer.sendInitialData(this, remoteStacks, carried, new int[0]);
 		}
 
 		if (player instanceof ServerPlayer serverPlayer) {
@@ -246,17 +250,17 @@ public abstract class SettingsContainerMenu<S extends IStorageWrapper> extends A
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains("categoryName")) {
-			String categoryName = data.getString("categoryName");
+			String categoryName = data.getStringOr("categoryName", "");
 			if (settingsContainers.containsKey(categoryName)) {
 				settingsContainers.get(categoryName).handlePacket(data);
 			}
-		} else if (data.contains(TemplatePersistanceContainer.TEMPLATE_PERSISTANCE_TAG, Tag.TAG_COMPOUND)) {
-			templatePersistanceContainer.handlePacket(data.getCompound(TemplatePersistanceContainer.TEMPLATE_PERSISTANCE_TAG));
+		} else if (data.get(TemplatePersistanceContainer.TEMPLATE_PERSISTANCE_TAG) instanceof CompoundTag) {
+			templatePersistanceContainer.handlePacket(data.getCompoundOrEmpty(TemplatePersistanceContainer.TEMPLATE_PERSISTANCE_TAG));
 		}
 	}
 
 	@Override
-	public void clicked(int slotId, int dragType, ClickType clickTypeIn, Player player) {
+	public void clicked(int slotId, int dragType, ContainerInput clickTypeIn, Player player) {
 		//noop
 	}
 
@@ -302,7 +306,7 @@ public abstract class SettingsContainerMenu<S extends IStorageWrapper> extends A
 
 		@Nullable
 		@Override
-		public Pair<ResourceLocation, ResourceLocation> getNoItemIcon() {
+		public Identifier getNoItemIcon() {
 			return inaccessibleSlots.contains(sophisticatedCore_getSlotIndex()) ? StorageContainerMenuBase.INACCESSIBLE_SLOT_BACKGROUND : emptySlotIcons.getOrDefault(sophisticatedCore_getSlotIndex(), null);
 		}
 	}
@@ -338,7 +342,7 @@ public abstract class SettingsContainerMenu<S extends IStorageWrapper> extends A
 	}
 
 	protected boolean isServer() {
-		return !player.level().isClientSide;
+		return !player.level().isClientSide();
 	}
 
 	public void sendAdditionalSlotInfo() {
@@ -370,28 +374,24 @@ public abstract class SettingsContainerMenu<S extends IStorageWrapper> extends A
 	}
 
 	@Override
-	public void updateEmptySlotIcons(Map<ResourceLocation, Set<Integer>> emptySlotIcons) {
+	public void updateEmptySlotIcons(Map<Identifier, Set<Integer>> emptySlotIcons) {
 		this.emptySlotIcons.clear();
-		emptySlotIcons.forEach((textureName, slots) -> slots.forEach(slot -> this.emptySlotIcons.put(slot, new Pair<>(InventoryMenu.BLOCK_ATLAS, textureName))));
+		emptySlotIcons.forEach((textureName, slots) -> slots.forEach(slot -> this.emptySlotIcons.put(slot, textureName)));
 	}
 
 	@Override
-	public void setRemoteSlotNoCopy(int slot, ItemStack stack) {
-		ItemStack previous = getSlot(slot).getItem();
-		super.setRemoteSlotNoCopy(slot, stack);
-
-		if (previous.isEmpty() || stack.isEmpty()) {
-			inventorySlotStackChanged = true;
-		}
+	public void setRemoteSlotUnsafe(int slot, HashedStack stack) {
+		remoteGhostSlots.get(slot).receive(stack);
+		inventorySlotStackChanged = true;
 	}
 
 	private void sendEmptySlotIcons() {
 		if (!(player instanceof ServerPlayer serverPlayer)) {
 			return;
 		}
-		Map<ResourceLocation, Set<Integer>> noItemSlotTextures = new HashMap<>();
+		Map<Identifier, Set<Integer>> noItemSlotTextures = new HashMap<>();
 		for (int slot = 0; slot < storageWrapper.getInventoryHandler().getSlotCount(); slot++) {
-			Pair<ResourceLocation, ResourceLocation> noItemIcon = storageWrapper.getInventoryHandler().getNoItemIcon(slot);
+			Pair<Identifier, Identifier> noItemIcon = storageWrapper.getInventoryHandler().getNoItemIcon(slot);
 			if (noItemIcon != null) {
 				noItemSlotTextures.computeIfAbsent(noItemIcon.getSecond(), rl -> new HashSet<>()).add(slot);
 			}

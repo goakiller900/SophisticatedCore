@@ -10,7 +10,7 @@ import net.p3pp3rf1y.sophisticatedcore.SophisticatedCore;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.StorageContainerMenuBase;
 
 public record REISetGhostSlotPayload(ItemStack stack, int slotNumber) implements CustomPacketPayload {
-	public static final Type<REISetGhostSlotPayload> TYPE = new Type<>(SophisticatedCore.getRL("rei_set_ghost_slot"));
+	public static final Type<REISetGhostSlotPayload> TYPE = new Type<>(SophisticatedCore.getIdentifier("rei_set_ghost_slot"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, REISetGhostSlotPayload> STREAM_CODEC = StreamCodec.composite(
 			ItemStack.STREAM_CODEC,
 			REISetGhostSlotPayload::stack,

@@ -23,17 +23,17 @@ public class ItemDisplaySettingsContainer extends SettingsContainerBase<ItemDisp
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains(SELECT_SLOT_TAG)) {
-			selectSlot(data.getInt(SELECT_SLOT_TAG));
+			selectSlot(data.getIntOr(SELECT_SLOT_TAG, -1));
 		} else if (data.contains(UNSELECT_SLOT_TAG)) {
-			unselectSlot(data.getInt(UNSELECT_SLOT_TAG));
+			unselectSlot(data.getIntOr(UNSELECT_SLOT_TAG, -1));
 		} else if (data.contains(ROTATE_CLOCKWISE_TAG)) {
-			rotateClockwise(data.getInt(ROTATE_CLOCKWISE_TAG));
+			rotateClockwise(data.getIntOr(ROTATE_CLOCKWISE_TAG, -1));
 		} else if (data.contains(ROTATE_COUNTER_CLOCKWISE_TAG)) {
-			rotateCounterClockwise(data.getInt(ROTATE_COUNTER_CLOCKWISE_TAG));
+			rotateCounterClockwise(data.getIntOr(ROTATE_COUNTER_CLOCKWISE_TAG, -1));
 		} else if (data.contains(COLOR_TAG)) {
-			setColor(DyeColor.byId(data.getInt(COLOR_TAG)));
+			setColor(DyeColor.byId(data.getIntOr(COLOR_TAG, 0)));
 		} else if (data.contains(DISPLAY_SIDE_TAG)) {
-			getCategory().setDisplaySide(DisplaySide.fromName(data.getString(DISPLAY_SIDE_TAG)));
+			getCategory().setDisplaySide(DisplaySide.fromName(data.getStringOr(DISPLAY_SIDE_TAG, "")));
 		}
 	}
 
@@ -114,5 +114,13 @@ public class ItemDisplaySettingsContainer extends SettingsContainerBase<ItemDisp
 
 	public DisplaySide getDisplaySide() {
 		return getCategory().getDisplaySide();
+	}
+
+	public boolean supportsSideSelection() {
+		return true;
+	}
+
+	public boolean canDeselectSlots() {
+		return true;
 	}
 }

@@ -4,7 +4,7 @@
   "minVersion": "0.8",
   "minMixinExtrasVersion": "0.5.0-beta.3",
   "package": "net.p3pp3rf1y.sophisticatedcore.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [
     "common.BlockEntityMixin",
     "common.BlockMixin",
@@ -31,13 +31,10 @@
     "client.AbstractContainerScreenMixin",
     "client.ClientLevelMixin",
     "client.ClientPacketListenerMixin",
+    "client.GuiGraphicsExtractorMixin",
     "client.KeyboardHandlerMixin",
     "client.MinecraftMixin",
-    "client.MouseHandlerMixin",
-    "client.ParticleEngineMixin",
-    "client.ScreenEffectRendererMixin",
-    "client.ScreenMixin",
-    "client.TerrainParticleMixin"
+    "client.MouseHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

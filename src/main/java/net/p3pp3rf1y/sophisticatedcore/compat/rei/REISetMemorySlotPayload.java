@@ -13,7 +13,7 @@ import net.p3pp3rf1y.sophisticatedcore.settings.itemdisplay.ItemDisplaySettingsC
 import net.p3pp3rf1y.sophisticatedcore.settings.memory.MemorySettingsCategory;
 
 public record REISetMemorySlotPayload(ItemStack stack, int slotNumber) implements CustomPacketPayload {
-	public static final Type<REISetMemorySlotPayload> TYPE = new Type<>(SophisticatedCore.getRL("rei_set_memory_slot"));
+	public static final Type<REISetMemorySlotPayload> TYPE = new Type<>(SophisticatedCore.getIdentifier("rei_set_memory_slot"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, REISetMemorySlotPayload> STREAM_CODEC = StreamCodec.composite(
 			ItemStack.STREAM_CODEC,
 			REISetMemorySlotPayload::stack,

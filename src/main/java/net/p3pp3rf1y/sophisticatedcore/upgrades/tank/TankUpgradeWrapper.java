@@ -1,10 +1,10 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades.tank;
 
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
-import io.github.fabricators_of_create.porting_lib.transfer.callbacks.TransactionCallback;
-import io.github.fabricators_of_create.porting_lib.transfer.fluid.SimpleFluidContent;
-import io.github.fabricators_of_create.porting_lib.transfer.item.SlottedStackStorage;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.TransferHelper;
+import net.p3pp3rf1y.sophisticatedcore.util.TransactionCallback;
+import net.p3pp3rf1y.sophisticatedcore.fluid.SimpleFluidContent;
+import net.p3pp3rf1y.sophisticatedcore.inventory.SlottedStackStorage;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -50,8 +50,8 @@ public class TankUpgradeWrapper extends UpgradeWrapperBase<TankUpgradeWrapper, T
 		contents = getContents(upgrade).copy();
 	}
 
-	public static SimpleFluidContent getContents(ItemStack upgrade) {
-		return upgrade.sophisticatedCore_getOrDefault(ModCoreDataComponents.FLUID_CONTENTS, SimpleFluidContent.EMPTY);
+	public static FluidStack getContents(ItemStack upgrade) {
+		return upgrade.sophisticatedCore_getOrDefault(ModCoreDataComponents.FLUID_CONTENTS, SimpleFluidContent.EMPTY).copy();
 	}
 
 	private boolean isValidFluidItem(ItemStack stack, boolean isOutput) {
@@ -240,7 +240,7 @@ public class TankUpgradeWrapper extends UpgradeWrapperBase<TankUpgradeWrapper, T
 
 	public boolean drainHandler(ContainerItemContext cic, Storage<FluidVariant> fluidHandler, Consumer<ItemStack> updateContainerStack) {
 		if (isValidFluidHandler(fluidHandler, false)) {
-			FluidVariant resource = contents.isEmpty() ? TransferUtil.getFirstFluid(fluidHandler).getVariant() : contents.getVariant();
+			FluidVariant resource = contents.isEmpty() ? TransferHelper.getFirstFluid(fluidHandler).getVariant() : contents.getVariant();
 			long extracted = contents.isEmpty() ?
 					StorageUtil.simulateExtract(fluidHandler, resource, FluidConstants.BUCKET, null) :
 					StorageUtil.simulateExtract(fluidHandler, resource, Math.min(FluidConstants.BUCKET, getTankCapacity() - contents.getAmount()), null);

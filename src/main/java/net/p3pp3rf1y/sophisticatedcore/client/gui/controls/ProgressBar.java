@@ -1,8 +1,9 @@
 package net.p3pp3rf1y.sophisticatedcore.client.gui.controls;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Dimension;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Position;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.TextureBlitData;
@@ -22,12 +23,12 @@ public class ProgressBar extends WidgetBase {
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
-		//noop
+	protected void extractBg(GuiGraphicsExtractor guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
+		// noop
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+	protected void extractWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		int height = progressTexture.getHeight();
 		int width = progressTexture.getWidth();
 		float progress = getProgress.get();
@@ -41,16 +42,16 @@ public class ProgressBar extends WidgetBase {
 		} else if (dir == ProgressDirection.LEFT_RIGHT) {
 			width = (int) (width * progress);
 		}
-		guiGraphics.blit(progressTexture.getTextureName(), x, y + yOffset, progressTexture.getU(), (float) progressTexture.getV() + yOffset, width, height, progressTexture.getTextureWidth(), progressTexture.getTextureHeight());
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, progressTexture.getTextureName(), x, y + yOffset, progressTexture.getU(),
+				(float) progressTexture.getV() + yOffset, width, height, progressTexture.getTextureWidth(), progressTexture.getTextureHeight());
 	}
 
 	@Override
 	public void updateNarration(NarrationElementOutput narrationElementOutput) {
-		//TODO add narration
+		// TODO add narration
 	}
 
 	public enum ProgressDirection {
-		LEFT_RIGHT,
-		BOTTOM_UP
+		LEFT_RIGHT, BOTTOM_UP
 	}
 }

@@ -16,7 +16,7 @@ import net.p3pp3rf1y.sophisticatedcore.util.StreamCodecHelper;
 import javax.annotation.Nullable;
 
 public record SyncDatapackSettingsTemplatePayload(String datapack, String templateName, @Nullable CompoundTag settingsNbt) implements CustomPacketPayload {
-	public static final Type<SyncDatapackSettingsTemplatePayload> TYPE = new Type<>(SophisticatedCore.getRL("sync_datapack_settings_template"));
+	public static final Type<SyncDatapackSettingsTemplatePayload> TYPE = new Type<>(SophisticatedCore.getIdentifier("sync_datapack_settings_template"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, SyncDatapackSettingsTemplatePayload> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.STRING_UTF8,
 			SyncDatapackSettingsTemplatePayload::datapack,

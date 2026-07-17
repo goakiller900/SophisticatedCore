@@ -4,7 +4,7 @@ import com.google.common.collect.Maps;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.p3pp3rf1y.sophisticatedcore.SophisticatedCore;
@@ -57,24 +57,24 @@ public class DatapackSettingsTemplateManager {
 	}
 
 	@SuppressWarnings("java:S6548")
-	public static class Loader extends SimpleIdentifiablePrepareableReloadListener<Map<ResourceLocation, CompoundTag>> {
+	public static class Loader extends SimpleIdentifiablePrepareableReloadListener<Map<Identifier, CompoundTag>> {
 		public static final Loader INSTANCE = new Loader();
 		private static final String DIRECTORY = "sophisticated_settingstemplates";
 		private static final String SUFFIX = ".snbt";
 		private static final int PATH_SUFFIX_LENGTH = SUFFIX.length();
 
 		private Loader() {
-			super(SophisticatedCore.getRL("datapack_settings_template_manager"));
+			super(SophisticatedCore.getIdentifier("datapack_settings_template_manager"));
 		}
 
 		@Override
-		protected Map<ResourceLocation, CompoundTag> prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
-			Map<ResourceLocation, CompoundTag> map = Maps.newHashMap();
+		protected Map<Identifier, CompoundTag> prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
+			Map<Identifier, CompoundTag> map = Maps.newHashMap();
 			int i = DIRECTORY.length() + 1;
 
 			resourceManager.listResources(DIRECTORY, fileName -> fileName.getPath().endsWith(SUFFIX)).forEach((resourcelocation, resource) -> {
 				String s = resourcelocation.getPath();
-				ResourceLocation resourceLocationWithoutSuffix = ResourceLocation.fromNamespaceAndPath(resourcelocation.getNamespace(), s.substring(i, s.length() - PATH_SUFFIX_LENGTH));
+				Identifier resourceLocationWithoutSuffix = Identifier.fromNamespaceAndPath(resourcelocation.getNamespace(), s.substring(i, s.length() - PATH_SUFFIX_LENGTH));
 
 				try (
 						InputStream inputstream = resource.open();
@@ -82,7 +82,7 @@ public class DatapackSettingsTemplateManager {
 				) {
 					String fileContents = IOUtils.toString(reader);
 
-					CompoundTag tag = TagParser.parseTag(fileContents);
+					CompoundTag tag = TagParser.parseCompoundFully(fileContents);
 					if (map.put(resourceLocationWithoutSuffix, tag) != null) {
 						throw new IllegalStateException("Duplicate data file ignored with ID " + resourceLocationWithoutSuffix);
 					}
@@ -96,7 +96,7 @@ public class DatapackSettingsTemplateManager {
 		}
 
 		@Override
-		protected void apply(Map<ResourceLocation, CompoundTag> templates, ResourceManager resourceManager, ProfilerFiller profiler) {
+		protected void apply(Map<Identifier, CompoundTag> templates, ResourceManager resourceManager, ProfilerFiller profiler) {
 			templates.forEach((resourceLocation, tag) -> {
 				String datapackName = resourceLocation.getNamespace();
 				String templateName = resourceLocation.getPath().substring(resourceLocation.getPath().lastIndexOf('/') + 1);

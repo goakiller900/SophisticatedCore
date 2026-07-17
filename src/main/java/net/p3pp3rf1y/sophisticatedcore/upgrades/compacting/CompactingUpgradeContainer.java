@@ -34,9 +34,9 @@ public class CompactingUpgradeContainer extends UpgradeContainerBase<CompactingU
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains(DATA_SHOULD_COMPACT_NON_UNCRAFTABLE)) {
-			setCompactNonUncraftable(data.getBoolean(DATA_SHOULD_COMPACT_NON_UNCRAFTABLE));
+			setCompactNonUncraftable(data.getBooleanOr(DATA_SHOULD_COMPACT_NON_UNCRAFTABLE, false));
 		} else if (data.contains(DATA_SHOULD_WORKD_IN_GUI)) {
-			setShouldWorkdInGUI(data.getBoolean(DATA_SHOULD_WORKD_IN_GUI));
+			setShouldWorkdInGUI(data.getBooleanOr(DATA_SHOULD_WORKD_IN_GUI, false));
 		} else {
 			filterLogicContainer.handlePacket(data);
 		}

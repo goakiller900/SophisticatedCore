@@ -21,9 +21,9 @@ public class MagnetUpgradeContainer extends UpgradeContainerBase<MagnetUpgradeWr
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains(DATA_PICKUP_ITEMS)) {
-			setPickupItems(data.getBoolean(DATA_PICKUP_ITEMS));
+			setPickupItems(data.getBooleanOr(DATA_PICKUP_ITEMS, false));
 		} else if (data.contains(DATA_PICKUP_XP)) {
-			setPickupXp(data.getBoolean(DATA_PICKUP_XP));
+			setPickupXp(data.getBooleanOr(DATA_PICKUP_XP, false));
 		}
 		filterLogicContainer.handlePacket(data);
 	}

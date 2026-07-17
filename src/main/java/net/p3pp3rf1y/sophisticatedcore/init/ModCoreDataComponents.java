@@ -1,14 +1,17 @@
 package net.p3pp3rf1y.sophisticatedcore.init;
 
 import com.mojang.serialization.Codec;
-import io.github.fabricators_of_create.porting_lib.transfer.fluid.SimpleFluidContent;
-import io.github.fabricators_of_create.porting_lib.util.DeferredHolder;
-import io.github.fabricators_of_create.porting_lib.util.DeferredRegister;
+import net.p3pp3rf1y.sophisticatedcore.fluid.SimpleFluidContent;
+import net.p3pp3rf1y.sophisticatedcore.util.DeferredRegister;
+import net.p3pp3rf1y.sophisticatedcore.util.RegistrySupplier;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.p3pp3rf1y.sophisticatedcore.SophisticatedCore;
@@ -49,6 +52,9 @@ public class ModCoreDataComponents {
             () -> new DataComponentType.Builder<CustomData>().persistent(CustomData.CODEC).networkSynchronized(CustomData.STREAM_CODEC).build());
 
     public static final Supplier<DataComponentType<Boolean>> SHIFT_CLICK_INTO_STORAGE = DATA_COMPONENT_TYPES.register("shift_click_into_storage",
+            () -> new DataComponentType.Builder<Boolean>().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
+
+    public static final Supplier<DataComponentType<Boolean>> REFILL_INPUT = DATA_COMPONENT_TYPES.register("refill_input",
             () -> new DataComponentType.Builder<Boolean>().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
 
     public static final Supplier<DataComponentType<SimpleItemContent>> INPUT_ITEM = DATA_COMPONENT_TYPES.register("input_item",
@@ -116,8 +122,9 @@ public class ModCoreDataComponents {
     public static final Supplier<DataComponentType<Boolean>> INTERACT_WITH_WORLD = DATA_COMPONENT_TYPES.register("interact_with_world",
             () -> new DataComponentType.Builder<Boolean>().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
 
-    public static final Supplier<DataComponentType<ResourceLocation>> RECIPE_ID = DATA_COMPONENT_TYPES.register("recipe_id",
-            () -> new DataComponentType.Builder<ResourceLocation>().persistent(ResourceLocation.CODEC).networkSynchronized(ResourceLocation.STREAM_CODEC).build());
+    public static final Supplier<DataComponentType<ResourceKey<Recipe<?>>>> RECIPE_ID = DATA_COMPONENT_TYPES.register("recipe_id",
+            () -> new DataComponentType.Builder<ResourceKey<Recipe<?>>>().persistent(ResourceKey.codec(Registries.RECIPE))
+                    .networkSynchronized(ResourceKey.streamCodec(Registries.RECIPE)).build());
 
     public static final Supplier<DataComponentType<SimpleFluidContent>> FLUID_CONTENTS = DATA_COMPONENT_TYPES.register("fluid_contents",
             () -> new DataComponentType.Builder<SimpleFluidContent>().persistent(SimpleFluidContent.CODEC).networkSynchronized(SimpleFluidContent.STREAM_CODEC).build());
@@ -140,13 +147,13 @@ public class ModCoreDataComponents {
     public static final Supplier<DataComponentType<Boolean>> MEND_ITEMS = DATA_COMPONENT_TYPES.register("mend_items",
             () -> new DataComponentType.Builder<Boolean>().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
 
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<FilterAttributes>> FILTER_ATTRIBUTES = DATA_COMPONENT_TYPES.register("filter_attributes",
+    public static final RegistrySupplier<DataComponentType<FilterAttributes>> FILTER_ATTRIBUTES = DATA_COMPONENT_TYPES.register("filter_attributes",
             () -> new DataComponentType.Builder<FilterAttributes>().persistent(FilterAttributes.CODEC).networkSynchronized(FilterAttributes.STREAM_CODEC).build());
 
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<FilterAttributes>> INPUT_FILTER_ATTRIBUTES = DATA_COMPONENT_TYPES.register("input_filter_attributes",
+    public static final RegistrySupplier<DataComponentType<FilterAttributes>> INPUT_FILTER_ATTRIBUTES = DATA_COMPONENT_TYPES.register("input_filter_attributes",
             () -> new DataComponentType.Builder<FilterAttributes>().persistent(FilterAttributes.CODEC).networkSynchronized(FilterAttributes.STREAM_CODEC).build());
 
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<FilterAttributes>> FUEL_FILTER_ATTRIBUTES = DATA_COMPONENT_TYPES.register("fuel_filter_attributes",
+    public static final RegistrySupplier<DataComponentType<FilterAttributes>> FUEL_FILTER_ATTRIBUTES = DATA_COMPONENT_TYPES.register("fuel_filter_attributes",
             () -> new DataComponentType.Builder<FilterAttributes>().persistent(FilterAttributes.CODEC).networkSynchronized(FilterAttributes.STREAM_CODEC).build());
 
     public static final Supplier<DataComponentType<Boolean>> ENABLED = DATA_COMPONENT_TYPES.register("enabled",

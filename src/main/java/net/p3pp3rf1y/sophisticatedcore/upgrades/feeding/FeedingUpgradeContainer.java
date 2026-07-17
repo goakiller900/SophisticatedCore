@@ -22,9 +22,9 @@ public class FeedingUpgradeContainer extends UpgradeContainerBase<FeedingUpgrade
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains(DATA_HUNGER_LEVEL)) {
-			setFeedAtHungerLevel(HungerLevel.fromName(data.getString(DATA_HUNGER_LEVEL)));
+			setFeedAtHungerLevel(HungerLevel.fromName(data.getStringOr(DATA_HUNGER_LEVEL, "")));
 		} else if (data.contains(DATA_FEED_IMMEDIATELY_WHEN_HURT)) {
-			setFeedImmediatelyWhenHurt(data.getBoolean(DATA_FEED_IMMEDIATELY_WHEN_HURT));
+			setFeedImmediatelyWhenHurt(data.getBooleanOr(DATA_FEED_IMMEDIATELY_WHEN_HURT, false));
 		}
 		filterLogicContainer.handlePacket(data);
 	}

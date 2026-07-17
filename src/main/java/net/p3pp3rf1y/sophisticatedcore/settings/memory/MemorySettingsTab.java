@@ -1,25 +1,15 @@
 package net.p3pp3rf1y.sophisticatedcore.settings.memory;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.SettingsScreen;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.controls.Button;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.controls.ButtonDefinition;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.controls.ButtonDefinitions;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.controls.ImageButton;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.controls.ToggleButton;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Dimension;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.GuiHelper;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Position;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.TextureBlitData;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.TranslationHelper;
-import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.UV;
+import net.p3pp3rf1y.sophisticatedcore.client.gui.controls.*;
+import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.*;
 import net.p3pp3rf1y.sophisticatedcore.settings.SettingsTab;
 
 import java.util.Optional;
@@ -29,22 +19,28 @@ import static net.p3pp3rf1y.sophisticatedcore.client.gui.utils.GuiHelper.DEFAULT
 
 public class MemorySettingsTab extends SettingsTab<MemorySettingsContainer> {
 	private static final TextureBlitData ICON = new TextureBlitData(GuiHelper.ICONS, Dimension.SQUARE_256, new UV(128, 32), Dimension.SQUARE_16);
-	private static final TextureBlitData SELECT_ALL_SLOTS_FOREGROUND = new TextureBlitData(GuiHelper.ICONS, new Position(1, 1), Dimension.SQUARE_256, new UV(16, 80), Dimension.SQUARE_16);
-	public static final ButtonDefinition SELECT_ALL_SLOTS = new ButtonDefinition(Dimension.SQUARE_16, DEFAULT_BUTTON_BACKGROUND, DEFAULT_BUTTON_HOVERED_BACKGROUND, SELECT_ALL_SLOTS_FOREGROUND,
+	private static final TextureBlitData SELECT_ALL_SLOTS_FOREGROUND = new TextureBlitData(GuiHelper.ICONS, new Position(1, 1), Dimension.SQUARE_256,
+			new UV(16, 80), Dimension.SQUARE_16);
+	public static final ButtonDefinition SELECT_ALL_SLOTS = new ButtonDefinition(Dimension.SQUARE_16, DEFAULT_BUTTON_BACKGROUND,
+			DEFAULT_BUTTON_HOVERED_BACKGROUND, SELECT_ALL_SLOTS_FOREGROUND,
 			Component.translatable(TranslationHelper.INSTANCE.translSettingsButton("select_all_slots")));
-	private static final TextureBlitData UNSELECT_ALL_SLOTS_FOREGROUND = new TextureBlitData(GuiHelper.ICONS, new Position(1, 1), Dimension.SQUARE_256, new UV(48, 80), Dimension.SQUARE_16);
-	public static final ButtonDefinition UNSELECT_ALL_SLOTS = new ButtonDefinition(Dimension.SQUARE_16, DEFAULT_BUTTON_BACKGROUND, DEFAULT_BUTTON_HOVERED_BACKGROUND, UNSELECT_ALL_SLOTS_FOREGROUND,
+	private static final TextureBlitData UNSELECT_ALL_SLOTS_FOREGROUND = new TextureBlitData(GuiHelper.ICONS, new Position(1, 1), Dimension.SQUARE_256,
+			new UV(48, 80), Dimension.SQUARE_16);
+	public static final ButtonDefinition UNSELECT_ALL_SLOTS = new ButtonDefinition(Dimension.SQUARE_16, DEFAULT_BUTTON_BACKGROUND,
+			DEFAULT_BUTTON_HOVERED_BACKGROUND, UNSELECT_ALL_SLOTS_FOREGROUND,
 			Component.translatable(TranslationHelper.INSTANCE.translSettingsButton("unselect_all_slots")));
 
 	public MemorySettingsTab(MemorySettingsContainer container, Position position, SettingsScreen screen) {
 		super(container, position, screen, Component.translatable(TranslationHelper.INSTANCE.translSettings(MemorySettingsCategory.NAME)),
 				new ImmutableList.Builder<Component>()
 						.add(Component.translatable(TranslationHelper.INSTANCE.translSettingsTooltip(MemorySettingsCategory.NAME)))
-						.addAll(TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsTooltip(MemorySettingsCategory.NAME) + "_detail", null, ChatFormatting.GRAY))
+						.addAll(TranslationHelper.INSTANCE.getTranslatedLines(
+								TranslationHelper.INSTANCE.translSettingsTooltip(MemorySettingsCategory.NAME) + "_detail", null, ChatFormatting.GRAY))
 						.build(),
 				new ImmutableList.Builder<Component>()
 						.add(Component.translatable(TranslationHelper.INSTANCE.translSettingsTooltip(MemorySettingsCategory.NAME)))
-						.addAll(TranslationHelper.INSTANCE.getTranslatedLines(TranslationHelper.INSTANCE.translSettingsTooltip(MemorySettingsCategory.NAME) + "_open_detail", null, ChatFormatting.GRAY))
+						.addAll(TranslationHelper.INSTANCE.getTranslatedLines(
+								TranslationHelper.INSTANCE.translSettingsTooltip(MemorySettingsCategory.NAME) + "_open_detail", null, ChatFormatting.GRAY))
 						.build(),
 				onTabIconClicked -> new ImageButton(new Position(position.x() + 1, position.y() + 4), Dimension.SQUARE_16, ICON, onTabIconClicked));
 		addHideableChild(new Button(new Position(x + 3, y + 24), SELECT_ALL_SLOTS, button -> container.selectAllSlots()));
@@ -81,24 +77,17 @@ public class MemorySettingsTab extends SettingsTab<MemorySettingsContainer> {
 	}
 
 	@Override
-	public void drawSlotStackOverlay(GuiGraphics guiGraphics, Slot slot, boolean templateLoadHovered) {
+	public void extractSlotStackOverlay(GuiGraphicsExtractor guiGraphics, Slot slot, boolean templateLoadHovered) {
 		if (templateLoadHovered) {
-			if (!getSettingsContainer().getSelectedTemplatesMemorizedStack(slot.sophisticatedCore_getSlotIndex()).isEmpty()) {
+			if (!getSettingsContainer().getSelectedTemplatesMemorizedStack(slot.getContainerSlot()).isEmpty()) {
 				drawMemorizedStackOverlay(guiGraphics, slot);
 			}
-		} else if (getSettingsContainer().isSlotSelected(slot.sophisticatedCore_getSlotIndex())) {
+		} else if (getSettingsContainer().isSlotSelected(slot.getContainerSlot())) {
 			drawMemorizedStackOverlay(guiGraphics, slot);
 		}
 	}
 
-	private void drawMemorizedStackOverlay(GuiGraphics guiGraphics, Slot slot) {
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
-		RenderSystem.enableBlend();
-		RenderSystem.disableDepthTest();
-		guiGraphics.blit(GuiHelper.GUI_CONTROLS, slot.x, slot.y, 77, 0, 16, 16);
-		RenderSystem.enableDepthTest();
-		RenderSystem.disableBlend();
-		poseStack.popPose();
+	private void drawMemorizedStackOverlay(GuiGraphicsExtractor guiGraphics, Slot slot) {
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, GuiHelper.GUI_CONTROLS, slot.x, slot.y, 77, 0, 16, 16, 256, 256);
 	}
 }

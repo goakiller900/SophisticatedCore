@@ -2,9 +2,8 @@
 /**
  * Implementation code for SophisticatedCore.
  */
-@ParametersAreNonnullByDefault @MethodsReturnNonnullByDefault
+@ParametersAreNonnullByDefault
 package net.p3pp3rf1y.sophisticatedcore.mixin.common;
 
-import net.minecraft.MethodsReturnNonnullByDefault;
 
 import javax.annotation.ParametersAreNonnullByDefault;

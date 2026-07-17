@@ -37,12 +37,12 @@ public class StreamCodecHelper {
 		return new StreamCodec<>() {
 			@Override
 			public void encode(B buffer, TagKey<T> value) {
-				buffer.writeResourceLocation(value.location());
+				buffer.writeIdentifier(value.location());
 			}
 
 			@Override
 			public TagKey<T> decode(B buffer) {
-				return TagKey.create(registry, buffer.readResourceLocation());
+				return TagKey.create(registry, buffer.readIdentifier());
 			}
 		};
 	}

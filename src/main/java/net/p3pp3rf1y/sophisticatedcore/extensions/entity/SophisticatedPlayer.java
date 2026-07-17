@@ -1,7 +1,8 @@
 package net.p3pp3rf1y.sophisticatedcore.extensions.entity;
 
 import io.netty.buffer.Unpooled;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
+import net.fabricmc.fabric.api.menu.v1.FabricMenuProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -26,15 +27,14 @@ public interface SophisticatedPlayer {
 	}
 
 	default OptionalInt sophisticatedCore_openMenu(MenuProvider menu, Consumer<RegistryFriendlyByteBuf> context) {
-		var screenHandlerFactory = new ExtendedScreenHandlerFactory<>() {
+		var screenHandlerFactory = new ExtendedMenuProvider<byte[]>() {
 			@Override
 			public @Nullable AbstractContainerMenu createMenu(int i, Inventory inventory, Player player) {
 				return menu.createMenu(i, inventory, player);
 			}
 
-			@Override
 			public boolean shouldCloseCurrentScreen() {
-				return menu.shouldCloseCurrentScreen();
+				return ((FabricMenuProvider) menu).shouldCloseCurrentScreen();
 			}
 
 			@Override

@@ -2,7 +2,7 @@ package net.p3pp3rf1y.sophisticatedcore.upgrades;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
@@ -164,7 +164,7 @@ public class FilterLogicContainerBase<T extends FilterLogic, S extends Slot> {
 		serverUpdater.sendDataToServer(() -> {
 			CompoundTag tag = new CompoundTag();
 			tag.putBoolean(dataId, value);
-			tag.putString(DATA_COMPONENT_KEY, filterLogic.get().getAttributesComponent().getKey().location().toString());
+			tag.putString(DATA_COMPONENT_KEY, filterLogic.get().getAttributesComponent().getKey().identifier().toString());
 			return tag;
 		});
 	}
@@ -172,7 +172,7 @@ public class FilterLogicContainerBase<T extends FilterLogic, S extends Slot> {
 	protected void sendDataToServer(Supplier<CompoundTag> dataSupplier) {
 		serverUpdater.sendDataToServer(() -> {
 			CompoundTag tag = dataSupplier.get();
-			tag.putString(DATA_COMPONENT_KEY, filterLogic.get().getAttributesComponent().getKey().location().toString());
+			tag.putString(DATA_COMPONENT_KEY, filterLogic.get().getAttributesComponent().getKey().identifier().toString());
 			return tag;
 		});
 	}
@@ -202,34 +202,34 @@ public class FilterLogicContainerBase<T extends FilterLogic, S extends Slot> {
 			return false;
 		}
 
-		for (String key : data.getAllKeys()) {
+		for (String key : data.keySet()) {
 			switch (key) {
 				case DATA_IS_ALLOW_LIST -> {
-					setAllowList(data.getBoolean(DATA_IS_ALLOW_LIST));
+					setAllowList(data.getBooleanOr(DATA_IS_ALLOW_LIST, false));
 					return true;
 				}
 				case DATA_MATCH_DURABILITY -> {
-					setMatchDurability(data.getBoolean(DATA_MATCH_DURABILITY));
+					setMatchDurability(data.getBooleanOr(DATA_MATCH_DURABILITY, false));
 					return true;
 				}
 				case DATA_MATCH_NBT -> {
-					setMatchNbt(data.getBoolean(DATA_MATCH_NBT));
+					setMatchNbt(data.getBooleanOr(DATA_MATCH_NBT, false));
 					return true;
 				}
 				case DATA_PRIMARY_MATCH -> {
-					setPrimaryMatch(PrimaryMatch.fromName(data.getString(DATA_PRIMARY_MATCH)));
+					setPrimaryMatch(PrimaryMatch.fromName(data.getStringOr(DATA_PRIMARY_MATCH, "")));
 					return true;
 				}
 				case DATA_ADD_TAG_NAME -> {
-					addTagName(TagKey.create(Registries.ITEM, ResourceLocation.parse(data.getString(DATA_ADD_TAG_NAME))));
+					addTagName(TagKey.create(Registries.ITEM, Identifier.parse(data.getStringOr(DATA_ADD_TAG_NAME, ""))));
 					return true;
 				}
 				case DATA_REMOVE_TAG_NAME -> {
-					removeSelectedTag(TagKey.create(Registries.ITEM, ResourceLocation.parse(data.getString(DATA_REMOVE_TAG_NAME))));
+					removeSelectedTag(TagKey.create(Registries.ITEM, Identifier.parse(data.getStringOr(DATA_REMOVE_TAG_NAME, ""))));
 					return true;
 				}
 				case DATA_MATCH_ANY_TAG -> {
-					setMatchAnyTag(data.getBoolean(DATA_MATCH_ANY_TAG));
+					setMatchAnyTag(data.getBooleanOr(DATA_MATCH_ANY_TAG, false));
 					return true;
 				}
 				default -> {
@@ -241,7 +241,7 @@ public class FilterLogicContainerBase<T extends FilterLogic, S extends Slot> {
 	}
 
 	protected boolean isDifferentFilterLogicsData(CompoundTag data) {
-		return data.contains(DATA_COMPONENT_KEY) && !filterLogic.get().getAttributesComponent().getKey().location().toString().equals(data.getString(DATA_COMPONENT_KEY));
+		return data.contains(DATA_COMPONENT_KEY) && !filterLogic.get().getAttributesComponent().getKey().identifier().toString().equals(data.getStringOr(DATA_COMPONENT_KEY, ""));
 	}
 
 	public class TagSelectionSlot extends Slot implements IFilterSlot {
@@ -259,7 +259,7 @@ public class FilterLogicContainerBase<T extends FilterLogic, S extends Slot> {
 
 		@Override
 		public boolean mayPlace(ItemStack stack) {
-			return stack.isEmpty() || stack.getTags().findAny().isPresent();
+			return stack.isEmpty() || stack.typeHolder().tags().findAny().isPresent();
 		}
 
 		@Override
@@ -292,7 +292,7 @@ public class FilterLogicContainerBase<T extends FilterLogic, S extends Slot> {
 		public void set(ItemStack stack) {
 			this.stack = stack;
 			tagsToAdd.clear();
-			tagsToAdd.addAll(stack.getTags().toList());
+			tagsToAdd.addAll(stack.typeHolder().tags().toList());
 			getTagNames().forEach(tagsToAdd::remove);
 			selectedTagToAdd = 0;
 			onUpdate.run();

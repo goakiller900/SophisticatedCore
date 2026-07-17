@@ -9,7 +9,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
 import net.p3pp3rf1y.sophisticatedcore.api.IStorageFluidHandler;
 import net.p3pp3rf1y.sophisticatedcore.api.IStorageWrapper;
 import net.p3pp3rf1y.sophisticatedcore.init.ModCoreDataComponents;

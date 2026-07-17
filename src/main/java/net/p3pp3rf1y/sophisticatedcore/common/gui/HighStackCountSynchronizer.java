@@ -2,13 +2,17 @@ package net.p3pp3rf1y.sophisticatedcore.common.gui;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.network.HashedStack;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerSynchronizer;
+import net.minecraft.world.inventory.RemoteSlot;
 import net.minecraft.world.item.ItemStack;
 import net.p3pp3rf1y.sophisticatedcore.network.PacketDistributor;
 import net.p3pp3rf1y.sophisticatedcore.network.SyncContainerStacksPayload;
 import net.p3pp3rf1y.sophisticatedcore.network.SyncSlotStackPayload;
+
+import java.util.List;
 
 public class HighStackCountSynchronizer implements ContainerSynchronizer {
 	private final ServerPlayer player;
@@ -18,7 +22,7 @@ public class HighStackCountSynchronizer implements ContainerSynchronizer {
 	}
 
 	@Override
-	public void sendInitialData(AbstractContainerMenu containerMenu, NonNullList<ItemStack> stacks, ItemStack carriedStack, int[] dataSlots) {
+	public void sendInitialData(AbstractContainerMenu containerMenu, List<ItemStack> stacks, ItemStack carriedStack, int[] dataSlots) {
 		PacketDistributor.sendToPlayer(player, new SyncContainerStacksPayload(containerMenu.containerId, containerMenu.incrementStateId(), stacks, carriedStack));
 	}
 
@@ -35,5 +39,27 @@ public class HighStackCountSynchronizer implements ContainerSynchronizer {
 	@Override
 	public void sendDataChange(AbstractContainerMenu containerMenu, int slotInd, int data) {
 		//noop - not used in StorageContainer
+	}
+
+	@Override
+	public RemoteSlot createSlot() {
+		return new RemoteSlot() {
+			private ItemStack stack = ItemStack.EMPTY;
+
+			@Override
+			public void force(ItemStack stack) {
+				this.stack = stack.copy();
+			}
+
+			@Override
+			public void receive(HashedStack stack) {
+				// Server-side synchronizers only compare and force full stacks.
+			}
+
+			@Override
+			public boolean matches(ItemStack stack) {
+				return ItemStack.matches(this.stack, stack);
+			}
+		};
 	}
 }

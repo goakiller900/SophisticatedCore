@@ -3,17 +3,20 @@ package net.p3pp3rf1y.sophisticatedcore.crafting;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementRequirements;
 import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.advancements.Criterion;
-import net.minecraft.advancements.critereon.RecipeUnlockedTrigger;
+import net.minecraft.advancements.triggers.Criterion;
+import net.minecraft.advancements.triggers.RecipeUnlockedTrigger;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.ItemLike;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +69,7 @@ public class SCShapelessRecipeBuilder implements RecipeBuilder {
 	 * Adds an ingredient that can be any item in the given tag.
 	 */
 	public SCShapelessRecipeBuilder requires(TagKey<Item> tag) {
-		return this.requires(Ingredient.of(tag));
+		return this.requires(Ingredient.of(BuiltInRegistries.ITEM.get(tag).orElseThrow()));
 	}
 
 	/**
@@ -115,13 +118,17 @@ public class SCShapelessRecipeBuilder implements RecipeBuilder {
 		return this;
 	}
 
-	@Override
 	public Item getResult() {
 		return this.result;
 	}
 
 	@Override
-	public void save(RecipeOutput recipeOutput, ResourceLocation id) {
+	public ResourceKey<Recipe<?>> defaultId() {
+		return RecipeBuilder.getDefaultRecipeId(resultStack);
+	}
+
+	@Override
+	public void save(RecipeOutput recipeOutput, ResourceKey<Recipe<?>> id) {
 		this.ensureValid(id);
 		Advancement.Builder builder = recipeOutput.advancement()
 				.addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(id))
@@ -129,18 +136,18 @@ public class SCShapelessRecipeBuilder implements RecipeBuilder {
 				.requirements(AdvancementRequirements.Strategy.OR);
 		this.criteria.forEach(builder::addCriterion);
 		ShapelessRecipe shapelessRecipe = new ShapelessRecipe(
-				Objects.requireNonNullElse(this.group, ""),
-				RecipeBuilder.determineBookCategory(this.category),
-				this.resultStack,
+				RecipeBuilder.createCraftingCommonInfo(true),
+				RecipeBuilder.createCraftingBookInfo(this.category, Objects.requireNonNullElse(this.group, "")),
+				ItemStackTemplate.fromNonEmptyStack(this.resultStack),
 				this.ingredients
 		);
-		recipeOutput.accept(id, shapelessRecipe, builder.build(id.withPrefix("recipes/" + this.category.getFolderName() + "/")));
+		recipeOutput.accept(id, shapelessRecipe, builder.build(id.identifier().withPrefix("recipes/" + this.category.getFolderName() + "/")));
 	}
 
 	/**
 	 * Makes sure that this recipe is valid and obtainable.
 	 */
-	private void ensureValid(ResourceLocation id) {
+	private void ensureValid(ResourceKey<Recipe<?>> id) {
 		if (this.criteria.isEmpty()) {
 			throw new IllegalStateException("No way of obtaining recipe " + id);
 		}

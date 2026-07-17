@@ -2,9 +2,9 @@ package net.p3pp3rf1y.sophisticatedcore.util;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
-import io.github.fabricators_of_create.porting_lib.transfer.callbacks.TransactionCallback;
-import io.github.fabricators_of_create.porting_lib.transfer.item.ItemStackHandler;
-import io.github.fabricators_of_create.porting_lib.transfer.item.SlottedStackStorage;
+import net.p3pp3rf1y.sophisticatedcore.util.TransactionCallback;
+import net.p3pp3rf1y.sophisticatedcore.inventory.ItemStackHandler;
+import net.p3pp3rf1y.sophisticatedcore.inventory.SlottedStackStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.SlottedStorage;
@@ -223,7 +223,7 @@ public class InventoryHelper {
 	}
 
 	private static void playPickupSound(Level level, @Nonnull Player player) {
-		level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2F, RandHelper.getRandomMinusOneToOne(level.random) * 1.4F + 2.0F);
+		level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2F, RandHelper.getRandomMinusOneToOne(level.getRandom()) * 1.4F + 2.0F);
 	}
 
 	public static void iterate(Storage<ItemVariant> handler, Consumer<ItemStack> actOn) {
@@ -417,7 +417,7 @@ public class InventoryHelper {
 	public static ItemStack mergeIntoPlayerInventory(Player player, ItemStack stack, int startSlot) {
 		ItemStack result = stack.copy();
 		List<Integer> emptySlots = new ArrayList<>();
-		for (int slot = startSlot; slot < player.getInventory().items.size(); slot++) {
+		for (int slot = startSlot; slot < player.getInventory().getContainerSize(); slot++) {
 			ItemStack slotStack = player.getInventory().getItem(slot);
 			if (slotStack.isEmpty()) {
 				emptySlots.add(slot);

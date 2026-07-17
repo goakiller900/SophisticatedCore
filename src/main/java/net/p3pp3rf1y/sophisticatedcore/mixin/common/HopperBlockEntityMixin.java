@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.mixin.common;
 
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
@@ -53,7 +53,7 @@ public class HopperBlockEntityMixin {
 			Storage<ItemVariant> target = Capabilities.ItemHandler.ENTITY_AUTOMATION.find(entity, direction.getOpposite());
 			if (target != null) {
 				long moved = StorageUtil.move(
-						InventoryStorage.of(blockEntity, direction),
+						ContainerStorage.of(blockEntity, direction),
 						target,
 						iv -> true,
 						1,
@@ -90,7 +90,7 @@ public class HopperBlockEntityMixin {
 			if (source != null) {
 				long moved = StorageUtil.move(
 						source,
-						InventoryStorage.of(hopper, Direction.UP),
+						ContainerStorage.of(hopper, Direction.UP),
 						iv -> true,
 						1,
 						null

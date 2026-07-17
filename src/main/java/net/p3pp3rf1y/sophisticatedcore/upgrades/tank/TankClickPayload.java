@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedcore.upgrades.tank;
 
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
 import io.netty.buffer.ByteBuf;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
@@ -18,7 +18,7 @@ import net.p3pp3rf1y.sophisticatedcore.common.gui.StorageContainerMenuBase;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.UpgradeContainerBase;
 
 public record TankClickPayload(int upgradeSlot) implements CustomPacketPayload {
-	public static final Type<TankClickPayload> TYPE = new Type<>(SophisticatedCore.getRL("tank_click"));
+	public static final Type<TankClickPayload> TYPE = new Type<>(SophisticatedCore.getIdentifier("tank_click"));
 	public static final StreamCodec<ByteBuf, TankClickPayload> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.INT,
 			TankClickPayload::upgradeSlot,

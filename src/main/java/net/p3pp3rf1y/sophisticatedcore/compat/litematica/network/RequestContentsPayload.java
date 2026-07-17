@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public record RequestContentsPayload() implements CustomPacketPayload {
-	public static final Type<RequestContentsPayload> TYPE = new Type<>(SophisticatedCore.getRL("litematica_request_contents"));
+	public static final Type<RequestContentsPayload> TYPE = new Type<>(SophisticatedCore.getIdentifier("litematica_request_contents"));
 	public static final StreamCodec<ByteBuf, RequestContentsPayload> STREAM_CODEC = StreamCodecHelper.singleton(RequestContentsPayload::new);
 
 	@Override

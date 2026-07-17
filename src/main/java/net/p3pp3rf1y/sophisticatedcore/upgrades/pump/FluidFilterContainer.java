@@ -5,8 +5,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
-import io.github.fabricators_of_create.porting_lib.transfer.TransferUtil;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.TransferHelper;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.IServerUpdater;
 import net.p3pp3rf1y.sophisticatedcore.util.CapabilityHelper;
 
@@ -44,9 +44,9 @@ public class FluidFilterContainer {
 
 	public boolean handlePacket(CompoundTag data) {
 		if (data.contains(DATA_FLUID)) {
-			CompoundTag fluidData = data.getCompound(DATA_FLUID);
-			FluidStack fluid = FluidStack.parseOptional(player.level().registryAccess(), fluidData.getCompound("fluid"));
-			setFluid(fluidData.getInt("index"), fluid);
+			CompoundTag fluidData = data.getCompoundOrEmpty(DATA_FLUID);
+			FluidStack fluid = FluidStack.parseOptional(player.level().registryAccess(), fluidData.getCompoundOrEmpty("fluid"));
+			setFluid(fluidData.getIntOr("index", -1), fluid);
 			return true;
 		}
 		return false;
@@ -64,7 +64,7 @@ public class FluidFilterContainer {
 		}
 
 		CapabilityHelper.runOnFluidHandler(carried, (cic, itemFluidHandler) -> {
-			FluidStack containedFluid = TransferUtil.simulateExtractAnyFluid(itemFluidHandler, FluidConstants.BUCKET);
+			FluidStack containedFluid = TransferHelper.simulateExtractAnyFluid(itemFluidHandler, FluidConstants.BUCKET);
 			if (!containedFluid.isEmpty()) {
 				setFluid(index, containedFluid);
 			}

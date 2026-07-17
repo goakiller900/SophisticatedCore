@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class REIMoveItemsPayload implements CustomPacketPayload {
-	public static final Type<REIMoveItemsPayload> TYPE = new Type<>(SophisticatedCore.getRL("rei_move_items"));
+	public static final Type<REIMoveItemsPayload> TYPE = new Type<>(SophisticatedCore.getIdentifier("rei_move_items"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, REIMoveItemsPayload> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.BOOL,
 			(p) -> p.shiftDown,

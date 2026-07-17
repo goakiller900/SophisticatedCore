@@ -2,15 +2,17 @@ package net.p3pp3rf1y.sophisticatedcore.client.gui.controls;
 
 import it.unimi.dsi.fastutil.floats.FloatConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.util.FastColor;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.DyeColor;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Dimension;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.GuiHelper;
 import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Position;
 import net.p3pp3rf1y.sophisticatedcore.util.ColorHelper;
+import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -40,20 +42,19 @@ public class ColorPicker extends CompositeWidgetBase<WidgetBase> {
 		addChild(colorPreview);
 		textColorEntry = new TextBox(new Position(0, 0), new Dimension(COLOR_ENTRY_WIDTH, 12)) {
 			@Override
-			public boolean mouseClicked(double mouseX, double mouseY, int button) {
+			public boolean mouseClicked(MouseButtonEvent event, boolean doubleClicked) {
 				if (isEditable()) {
 					setFocused(true);
 					screen.setFocused(textColorEntry);
 				}
-				return super.mouseClicked(mouseX, mouseY, button);
+				return super.mouseClicked(event, doubleClicked);
 			}
 		};
 		addChild(textColorEntry);
-		colorGradientArea = new ColorGradientArea(new Position(0, 0), new Dimension(COLOR_GRADIENT_WIDTH, COLOR_GRADIENT_HEIGHT),
-				gradientColor -> {
-					textColorEntry.setValueWithoutNotification(ColorHelper.getHexColor(gradientColor));
-					colorPreview.setColor(gradientColor);
-				});
+		colorGradientArea = new ColorGradientArea(new Position(0, 0), new Dimension(COLOR_GRADIENT_WIDTH, COLOR_GRADIENT_HEIGHT), gradientColor -> {
+			textColorEntry.setValueWithoutNotification(ColorHelper.getHexColor(gradientColor));
+			colorPreview.setColor(gradientColor);
+		});
 		colorGradientArea.setColor(color);
 		rainbowSlider = new RainbowSlider(new Position(0, 0), new Dimension(RAINBOW_SLIDER_WIDTH, 50), colorGradientArea::setHue);
 		rainbowSlider.setColor(color);
@@ -67,12 +68,12 @@ public class ColorPicker extends CompositeWidgetBase<WidgetBase> {
 			}
 
 			try {
-				int c = FastColor.ARGB32.opaque(Integer.parseInt(s.substring(1), 16));
+				int c = ARGB.opaque(Integer.parseInt(s.substring(1), 16));
 				colorPreview.setColor(c);
 				colorGradientArea.setColor(c);
 				rainbowSlider.setColor(c);
 			} catch (NumberFormatException e) {
-				//noop
+				// noop
 			}
 		});
 		addChild(textColorEntry);
@@ -88,13 +89,13 @@ public class ColorPicker extends CompositeWidgetBase<WidgetBase> {
 		addChild(transparentColorButton);
 
 		cancelButton = new Button(new Position(0, 0), ButtonDefinitions.CANCEL, button -> {
-			colorSetter.accept(color); //just send the old color back
+			colorSetter.accept(color); // just send the old color back
 		});
 		addChild(cancelButton);
 
 		addDefaultColorButtons();
 
-		setPosition(position); //calling set here so that all the positions can be kept in its code
+		setPosition(position); // calling set here so that all the positions can be kept in its code
 	}
 
 	private void addDefaultColorButtons() {
@@ -112,7 +113,7 @@ public class ColorPicker extends CompositeWidgetBase<WidgetBase> {
 	}
 
 	@Override
-	public void renderBg(GuiGraphics guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
+	public void extractBg(GuiGraphicsExtractor guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
 		GuiHelper.renderControlBackground(guiGraphics, x - 5, y - 5, getWidth() + 5 + 5, getHeight() + 5 + 5, 128, 0, 128, 256);
 	}
 
@@ -151,34 +152,32 @@ public class ColorPicker extends CompositeWidgetBase<WidgetBase> {
 
 		public void setColor(int color) {
 			this.color = color;
-			this.hue = Color.RGBtoHSB(FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), null)[0];
+			this.hue = Color.RGBtoHSB(ARGB.red(color), ARGB.green(color), ARGB.blue(color), null)[0];
 		}
 
 		public void setHue(float hue) {
 			this.hue = hue;
-			float[] hsv = Color.RGBtoHSB(FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), null);
+			float[] hsv = Color.RGBtoHSB(ARGB.red(color), ARGB.green(color), ARGB.blue(color), null);
 			float saturation = hsv[1];
 			float value = hsv[2];
-			color = FastColor.ARGB32.opaque(Mth.hsvToRgb(hue, saturation, value));
+			color = ARGB.opaque(Mth.hsvToRgb(hue, saturation, value));
 			colorSetter.accept(color);
 		}
 
 		@Override
-		protected void renderBg(GuiGraphics guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
+		protected void extractBg(GuiGraphicsExtractor guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
 			int topRightCornerColor = Mth.hsvToRgb(hue, 1, 1);
-			int red = FastColor.ARGB32.red(topRightCornerColor);
-			int green = FastColor.ARGB32.green(topRightCornerColor);
-			int blue = FastColor.ARGB32.blue(topRightCornerColor);
+			int red = ARGB.red(topRightCornerColor);
+			int green = ARGB.green(topRightCornerColor);
+			int blue = ARGB.blue(topRightCornerColor);
 			for (int i = 0; i < getWidth(); i++) {
 				for (int j = 0; j < getHeight(); j++) {
 
 					float horizontalFactor = (float) i / getWidth();
 					float verticalFactor = (float) j / getHeight();
-					int color = FastColor.ARGB32.opaque(FastColor.ARGB32.color(
-							(int) ((1 - verticalFactor) * ((1 - horizontalFactor) * 255 + red * horizontalFactor)),
+					int color = ARGB.opaque(ARGB.color((int) ((1 - verticalFactor) * ((1 - horizontalFactor) * 255 + red * horizontalFactor)),
 							(int) ((1 - verticalFactor) * ((1 - horizontalFactor) * 255 + green * horizontalFactor)),
-							(int) ((1 - verticalFactor) * ((1 - horizontalFactor) * 255 + blue * horizontalFactor))
-					));
+							(int) ((1 - verticalFactor) * ((1 - horizontalFactor) * 255 + blue * horizontalFactor))));
 
 					guiGraphics.fill(x + i, y + j, x + i + 1, y + j + 1, color);
 				}
@@ -186,20 +185,35 @@ public class ColorPicker extends CompositeWidgetBase<WidgetBase> {
 		}
 
 		@Override
-		protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-			float[] hsv = Color.RGBtoHSB(FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), null);
-			int x = (int) (hsv[1] * getWidth());
-			int y = (int) ((1 - hsv[2]) * getHeight());
+		protected void extractWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+			float[] hsv = Color.RGBtoHSB(ARGB.red(color), ARGB.green(color), ARGB.blue(color), null);
+			int x = Math.min((int) (hsv[1] * getWidth()), getWidth() - 1);
+			int y = Math.min((int) ((1 - hsv[2]) * getHeight()), getHeight() - 1);
 
-			GuiHelper.fill(guiGraphics, this.x, this.y + Math.max(y - 0.2f, 0), this.x + getWidth(), this.y + Math.min(y + 1.2f, getHeight()), 0xFF_FFFFFF);
-			GuiHelper.fill(guiGraphics, this.x + Math.max(x - 0.2f, 0), this.y, this.x + Math.min(x + 1.2f, getWidth()), this.y + getHeight(), 0xFF_FFFFFF);
+			Matrix3x2fStack pose = guiGraphics.pose();
+			pose.pushMatrix();
+			pose.translate(0, 0.8f);
+			GuiHelper.fill(guiGraphics, this.x, this.y + Math.max(y - 1, 0), this.x + getWidth(), this.y + Math.min(y, getHeight()), 0xFF_FFFFFF);
+			pose.popMatrix();
+			pose.pushMatrix();
+			pose.translate(0, -0.8f);
+			GuiHelper.fill(guiGraphics, this.x, this.y + Math.max(y + 1, 0), this.x + getWidth(), this.y + Math.min(y + 2, getHeight()), 0xFF_FFFFFF);
+			pose.popMatrix();
+			pose.pushMatrix();
+			pose.translate(0.8f, 0);
+			GuiHelper.fill(guiGraphics, this.x + Math.max(x - 1, 0), this.y, this.x + Math.min(x, getWidth()), this.y + getHeight(), 0xFF_FFFFFF);
+			pose.popMatrix();
+			pose.pushMatrix();
+			pose.translate(-0.8f, 0);
+			GuiHelper.fill(guiGraphics, this.x + Math.max(x + 1, 0), this.y, this.x + Math.min(x + 2, getWidth()), this.y + getHeight(), 0xFF_FFFFFF);
+			pose.popMatrix();
 			GuiHelper.fill(guiGraphics, this.x, this.y + y, this.x + getWidth(), this.y + y + 1, 0xFF_000000);
 			GuiHelper.fill(guiGraphics, this.x + x, this.y, this.x + x + 1, this.y + getHeight(), 0xFF_000000);
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button) {
-			setColorBasedOnMouseCoords(mouseX, mouseY);
+		public boolean mouseClicked(MouseButtonEvent event, boolean doubleClicked) {
+			setColorBasedOnMouseCoords(event.x(), event.y());
 			return true;
 		}
 
@@ -208,13 +222,13 @@ public class ColorPicker extends CompositeWidgetBase<WidgetBase> {
 			double yClicked = mouseY - y;
 			float saturation = (float) xClicked / getWidth();
 			float value = 1 - (float) yClicked / getHeight();
-			color = FastColor.ARGB32.opaque(Mth.hsvToRgb(hue, saturation, value));
+			color = ARGB.opaque(Mth.hsvToRgb(hue, saturation, value));
 			colorSetter.accept(color);
 		}
 
 		@Override
-		public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-			setColorBasedOnMouseCoords(mouseX, mouseY);
+		public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+			setColorBasedOnMouseCoords(event.x(), event.y());
 			return true;
 		}
 	}
@@ -229,31 +243,37 @@ public class ColorPicker extends CompositeWidgetBase<WidgetBase> {
 		}
 
 		public void setColor(int color) {
-			float[] hsl = Color.RGBtoHSB(FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), null);
+			float[] hsl = Color.RGBtoHSB(ARGB.red(color), ARGB.green(color), ARGB.blue(color), null);
 			this.hue = hsl[0];
 		}
 
 		@Override
-		protected void renderBg(GuiGraphics guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
+		protected void extractBg(GuiGraphicsExtractor guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
 			for (int i = 0; i < getHeight(); i++) {
 				float renderedHue = (float) i / getHeight();
-				int color = FastColor.ARGB32.opaque(Mth.hsvToRgb(renderedHue, 1, 1));
+				int color = ARGB.opaque(Mth.hsvToRgb(renderedHue, 1, 1));
 				guiGraphics.fill(x, y + getHeight() - i, x + getWidth(), y + getHeight() - i - 1, color);
 			}
 		}
 
 		@Override
-		protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		protected void extractWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 			int hueMarker = (int) (hue * getHeight());
-
-			GuiHelper.fill(guiGraphics, x, y + getHeight() - hueMarker - 1, x + getWidth(), y + getHeight() - hueMarker - 1.2f, 0xFF_FFFFFF);
+			Matrix3x2fStack pose = guiGraphics.pose();
+			pose.pushMatrix();
+			pose.translate(0, 0.8f);
+			GuiHelper.fill(guiGraphics, x, y + getHeight() - hueMarker - 1, x + getWidth(), y + getHeight() - hueMarker - 2, 0xFF_FFFFFF);
+			pose.popMatrix();
+			pose.pushMatrix();
+			pose.translate(0, -0.8f);
+			GuiHelper.fill(guiGraphics, x, y + getHeight() - hueMarker, x + getWidth(), y + getHeight() - hueMarker + 1, 0xFF_FFFFFF);
+			pose.popMatrix();
 			GuiHelper.fill(guiGraphics, x, y + getHeight() - hueMarker, x + getWidth(), y + getHeight() - hueMarker - 1, 0xFF_000000);
-			GuiHelper.fill(guiGraphics, x, y + getHeight() - hueMarker, x + getWidth(), y + getHeight() - hueMarker + 0.2f, 0xFF_FFFFFF);
 		}
 
 		@Override
-		public boolean mouseClicked(double mouseX, double mouseY, int button) {
-			setHueBasedOnMouseY(mouseY);
+		public boolean mouseClicked(MouseButtonEvent event, boolean doubleClicked) {
+			setHueBasedOnMouseY(event.y());
 			return true;
 		}
 
@@ -264,8 +284,8 @@ public class ColorPicker extends CompositeWidgetBase<WidgetBase> {
 		}
 
 		@Override
-		public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-			setHueBasedOnMouseY(mouseY);
+		public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+			setHueBasedOnMouseY(event.y());
 			return true;
 		}
 	}
@@ -283,12 +303,12 @@ public class ColorPicker extends CompositeWidgetBase<WidgetBase> {
 		}
 
 		@Override
-		protected void renderBg(GuiGraphics guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
-			//noop
+		protected void extractBg(GuiGraphicsExtractor guiGraphics, Minecraft minecraft, int mouseX, int mouseY) {
+			// noop
 		}
 
 		@Override
-		protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		protected void extractWidget(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
 			guiGraphics.fill(x, y, x + getWidth(), y + getHeight(), color);
 		}
 
