@@ -39,17 +39,6 @@ repositories {
 
     maven { url = "https://maven.fabricmc.net/" } // FAPI, Loader
     maven { url = "https://maven.quiltmc.org/repository/release" } // QM
-    maven {
-        name = "GitHubPackages"
-        url = uri("https://maven.pkg.github.com/Salandora/Porting-Lib")
-        credentials {
-            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
-            password = project.findProperty("gpr.key") ?: System.getenv("READ_PACKAGES_TOKEN")
-        }
-        content {
-            includeGroupByRegex "io.github.fabricators_of_create.Porting-Lib.*"
-        }
-    }
     maven { url = "https://mvn.devos.one/snapshots/" } // Create, Porting Lib
     maven { url = "https://mvn.devos.one/releases/" } // Porting Lib
 
