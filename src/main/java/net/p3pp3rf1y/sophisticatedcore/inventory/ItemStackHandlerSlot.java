@@ -51,6 +51,17 @@ public class ItemStackHandlerSlot extends SingleStackStorage {
 		onFinalCommit();
 	}
 
+	/**
+	 * Resets a reused slot while its handler is rebuilding the slot list. Rebuilding is
+	 * initialization, not an inventory mutation, so it must not fire a contents-change
+	 * callback before the slot has been put back into that list.
+	 */
+	protected void resetStack(ItemStack stack) {
+		setStack(stack);
+		lastStack = stack.copy();
+		handler.initSlot(this);
+	}
+
 	@Override
 	public ItemVariant getResource() {
 		return variant;
