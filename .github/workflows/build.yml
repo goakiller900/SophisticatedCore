@@ -50,10 +50,10 @@ jobs:
         run: |
           MINECRAFT_VERSION=$(grep '^minecraft_version=' gradle.properties | cut -d'=' -f2 | tr -d '\r')
           MOD_VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '\r')
-          RELEASE_TAG="v${MINECRAFT_VERSION}-${MOD_VERSION}-build.${GITHUB_RUN_NUMBER}"
+          ROLLING_TAG="latest-${MINECRAFT_VERSION}"
           echo "minecraft_version=${MINECRAFT_VERSION}" >> "$GITHUB_OUTPUT"
           echo "mod_version=${MOD_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "rolling_tag=${ROLLING_TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Upload compiled JARs
         if: success()
@@ -64,18 +64,23 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      # Pushes and pull requests only build and upload artifacts. A manual
-      # "Run workflow" also creates a tagged GitHub Release with the JARs.
-      - name: Create tagged GitHub Release and attach JARs
-        if: github.event_name == 'workflow_dispatch' && success()
+      # Keep one rolling release per Minecraft version. Every successful push to
+      # the main development branch replaces the previous release and all of its
+      # attached JARs. Manual workflow runs do the same.
+      - name: Replace rolling GitHub Release with latest JARs
+        if: success() && ((github.event_name == 'push' && github.ref == 'refs/heads/1.21.x-fabric') || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+          ROLLING_TAG: ${{ steps.version.outputs.rolling_tag }}
           MINECRAFT_VERSION: ${{ steps.version.outputs.minecraft_version }}
           MOD_VERSION: ${{ steps.version.outputs.mod_version }}
         shell: bash
         run: |
-          gh release create "$RELEASE_TAG" build/libs/*.jar \
+          # Remove the old rolling release and its tag so the new tag always
+          # points at the exact commit that produced these JARs.
+          gh release delete "$ROLLING_TAG" --yes --cleanup-tag 2>/dev/null || true
+
+          gh release create "$ROLLING_TAG" build/libs/*.jar \
             --target "$GITHUB_SHA" \
-            --title "SophisticatedCore ${MINECRAFT_VERSION}-${MOD_VERSION} (Build ${GITHUB_RUN_NUMBER})" \
-            --generate-notes
+            --title "SophisticatedCore ${MINECRAFT_VERSION} - Latest Build" \
+            --notes "Automated rolling build of SophisticatedCore ${MINECRAFT_VERSION}-${MOD_VERSION}. Actions build ${GITHUB_RUN_NUMBER}, commit ${GITHUB_SHA}. This release is replaced after every successful build of 1.21.x-fabric."
