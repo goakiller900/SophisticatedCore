@@ -12,7 +12,11 @@ public class SmokingUpgradeItem extends UpgradeItemBase<CookingUpgradeWrapper.Sm
 	private final CookingUpgradeConfig smokingUpgradeConfig;
 
 	public SmokingUpgradeItem(CookingUpgradeConfig smokingUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig) {
-        super(upgradeTypeLimitConfig);
+		this(smokingUpgradeConfig, upgradeTypeLimitConfig, new Properties());
+	}
+
+	public SmokingUpgradeItem(CookingUpgradeConfig smokingUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig, Properties properties) {
+        super(upgradeTypeLimitConfig, properties);
 		this.smokingUpgradeConfig = smokingUpgradeConfig;
 	}
 

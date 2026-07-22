@@ -12,9 +12,12 @@ public abstract class BlockConverterUpgradeItem<U extends BlockConverterUpgradeI
 		super(upgradeTypeLimitConfig);
 	}
 
+	public BlockConverterUpgradeItem(IUpgradeCountLimitConfig upgradeTypeLimitConfig, Properties properties) {
+		super(upgradeTypeLimitConfig, properties);
+	}
+
 	@Override
 	public List<UpgradeConflictDefinition> getUpgradeConflicts() {
 		return List.of();
 	}
 }
-

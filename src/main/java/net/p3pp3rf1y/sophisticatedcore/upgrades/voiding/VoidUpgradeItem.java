@@ -11,7 +11,11 @@ public class VoidUpgradeItem extends UpgradeItemBase<VoidUpgradeWrapper> {
 	private final VoidUpgradeConfig voidUpgradeConfig;
 
 	public VoidUpgradeItem(VoidUpgradeConfig voidUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig) {
-		super(upgradeTypeLimitConfig);
+		this(voidUpgradeConfig, upgradeTypeLimitConfig, new Properties());
+	}
+
+	public VoidUpgradeItem(VoidUpgradeConfig voidUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig, Properties properties) {
+		super(upgradeTypeLimitConfig, properties);
 		this.voidUpgradeConfig = voidUpgradeConfig;
 	}
 

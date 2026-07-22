@@ -32,7 +32,11 @@ public class InfinityUpgradeItem extends UpgradeItemBase<InfinityUpgradeItem.Wra
 	private final boolean admin;
 
 	public InfinityUpgradeItem(IUpgradeCountLimitConfig upgradeTypeLimitConfig, boolean admin) {
-		super(upgradeTypeLimitConfig);
+		this(upgradeTypeLimitConfig, admin, new Properties());
+	}
+
+	public InfinityUpgradeItem(IUpgradeCountLimitConfig upgradeTypeLimitConfig, boolean admin, Properties properties) {
+		super(upgradeTypeLimitConfig, properties);
 		this.admin = admin;
 	}
 

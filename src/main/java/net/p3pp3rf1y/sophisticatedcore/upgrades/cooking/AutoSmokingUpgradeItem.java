@@ -12,7 +12,11 @@ public class AutoSmokingUpgradeItem extends UpgradeItemBase<AutoCookingUpgradeWr
 	private final AutoCookingUpgradeConfig autoSmokingUpgradeConfig;
 
 	public AutoSmokingUpgradeItem(AutoCookingUpgradeConfig autoSmokingUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig) {
-        super(upgradeTypeLimitConfig);
+		this(autoSmokingUpgradeConfig, upgradeTypeLimitConfig, new Properties());
+	}
+
+	public AutoSmokingUpgradeItem(AutoCookingUpgradeConfig autoSmokingUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig, Properties properties) {
+        super(upgradeTypeLimitConfig, properties);
 		this.autoSmokingUpgradeConfig = autoSmokingUpgradeConfig;
 	}
 

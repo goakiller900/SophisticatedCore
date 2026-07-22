@@ -18,7 +18,11 @@ public class StackUpgradeItem extends UpgradeItemBase<StackUpgradeItem.Wrapper> 
 	private final double stackSizeMultiplier;
 
 	public StackUpgradeItem(double stackSizeMultiplier, IUpgradeCountLimitConfig upgradeTypeLimitConfig) {
-		super(upgradeTypeLimitConfig);
+		this(stackSizeMultiplier, upgradeTypeLimitConfig, new Properties());
+	}
+
+	public StackUpgradeItem(double stackSizeMultiplier, IUpgradeCountLimitConfig upgradeTypeLimitConfig, Properties properties) {
+		super(upgradeTypeLimitConfig, properties);
 		this.stackSizeMultiplier = stackSizeMultiplier;
 	}
 

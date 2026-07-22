@@ -12,7 +12,11 @@ public class AutoSmeltingUpgradeItem extends UpgradeItemBase<AutoCookingUpgradeW
 	private final AutoCookingUpgradeConfig autoSmeltingUpgradeConfig;
 
 	public AutoSmeltingUpgradeItem(AutoCookingUpgradeConfig autoSmeltingUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig) {
-        super(upgradeTypeLimitConfig);
+		this(autoSmeltingUpgradeConfig, upgradeTypeLimitConfig, new Properties());
+	}
+
+	public AutoSmeltingUpgradeItem(AutoCookingUpgradeConfig autoSmeltingUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig, Properties properties) {
+        super(upgradeTypeLimitConfig, properties);
         this.autoSmeltingUpgradeConfig = autoSmeltingUpgradeConfig;
 	}
 

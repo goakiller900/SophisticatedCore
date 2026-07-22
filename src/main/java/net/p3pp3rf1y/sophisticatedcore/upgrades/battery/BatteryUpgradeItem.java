@@ -22,7 +22,11 @@ public class BatteryUpgradeItem extends UpgradeItemBase<BatteryUpgradeWrapper> {
 	private final BatteryUpgradeConfig batteryUpgradeConfig;
 
 	public BatteryUpgradeItem(BatteryUpgradeConfig batteryUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig) {
-		super(upgradeTypeLimitConfig);
+		this(batteryUpgradeConfig, upgradeTypeLimitConfig, new Properties());
+	}
+
+	public BatteryUpgradeItem(BatteryUpgradeConfig batteryUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig, Properties properties) {
+		super(upgradeTypeLimitConfig, properties);
 		this.batteryUpgradeConfig = batteryUpgradeConfig;
 	}
 

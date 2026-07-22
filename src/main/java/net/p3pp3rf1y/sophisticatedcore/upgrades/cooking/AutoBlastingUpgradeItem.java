@@ -12,7 +12,11 @@ public class AutoBlastingUpgradeItem extends UpgradeItemBase<AutoCookingUpgradeW
 	private final AutoCookingUpgradeConfig autoBlastingUpgradeConfig;
 
 	public AutoBlastingUpgradeItem(AutoCookingUpgradeConfig autoBlastingUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig) {
-        super(upgradeTypeLimitConfig);
+		this(autoBlastingUpgradeConfig, upgradeTypeLimitConfig, new Properties());
+	}
+
+	public AutoBlastingUpgradeItem(AutoCookingUpgradeConfig autoBlastingUpgradeConfig, IUpgradeCountLimitConfig upgradeTypeLimitConfig, Properties properties) {
+        super(upgradeTypeLimitConfig, properties);
         this.autoBlastingUpgradeConfig = autoBlastingUpgradeConfig;
 	}
 

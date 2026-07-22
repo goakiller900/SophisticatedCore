@@ -13,7 +13,11 @@ public class CompactingUpgradeItem extends UpgradeItemBase<CompactingUpgradeWrap
 	private final IntSupplier filterSlotCount;
 
 	public CompactingUpgradeItem(boolean shouldCompactThreeByThree, IntSupplier filterSlotCount, IUpgradeCountLimitConfig upgradeTypeLimitConfig) {
-		super(upgradeTypeLimitConfig);
+		this(shouldCompactThreeByThree, filterSlotCount, upgradeTypeLimitConfig, new Properties());
+	}
+
+	public CompactingUpgradeItem(boolean shouldCompactThreeByThree, IntSupplier filterSlotCount, IUpgradeCountLimitConfig upgradeTypeLimitConfig, Properties properties) {
+		super(upgradeTypeLimitConfig, properties);
 		this.shouldCompactThreeByThree = shouldCompactThreeByThree;
 		this.filterSlotCount = filterSlotCount;
 	}

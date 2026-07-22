@@ -31,7 +31,7 @@ import java.util.Objects;
 public class SCShapedRecipeBuilder implements RecipeBuilder {
 	private final RecipeCategory category;
 	private final Item result;
-	private final ItemStack resultStack;
+	private final ItemStackTemplate resultStack;
 	private final List<String> rows = Lists.<String>newArrayList();
 	private final Map<Character, Ingredient> key = Maps.<Character, Ingredient>newLinkedHashMap();
 	private final Map<String, Criterion<?>> criteria = new LinkedHashMap<>();
@@ -40,12 +40,16 @@ public class SCShapedRecipeBuilder implements RecipeBuilder {
 	private boolean showNotification = true;
 
 	public SCShapedRecipeBuilder(RecipeCategory category, ItemLike result, int count) {
-		this(category, new ItemStack(result, count));
+		this(category, new ItemStackTemplate(result.asItem(), count));
 	}
 
 	public SCShapedRecipeBuilder(RecipeCategory category, ItemStack result) {
+		this(category, ItemStackTemplate.fromNonEmptyStack(result));
+	}
+
+	public SCShapedRecipeBuilder(RecipeCategory category, ItemStackTemplate result) {
 		this.category = category;
-		this.result = result.getItem();
+		this.result = result.item().value();
 		this.resultStack = result;
 	}
 
@@ -139,7 +143,7 @@ public class SCShapedRecipeBuilder implements RecipeBuilder {
 				RecipeBuilder.createCraftingCommonInfo(this.showNotification),
 				RecipeBuilder.createCraftingBookInfo(this.category, Objects.requireNonNullElse(this.group, "")),
 				shapedRecipePattern,
-				ItemStackTemplate.fromNonEmptyStack(this.resultStack)
+				this.resultStack
 		);
 		recipeOutput.accept(id, shapedRecipe, builder.build(id.identifier().withPrefix("recipes/" + this.category.getFolderName() + "/")));
 	}

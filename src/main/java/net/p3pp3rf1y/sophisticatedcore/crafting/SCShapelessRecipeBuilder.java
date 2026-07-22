@@ -28,19 +28,23 @@ import java.util.Objects;
 public class SCShapelessRecipeBuilder implements RecipeBuilder {
 	private final RecipeCategory category;
 	private final Item result;
-	private final ItemStack resultStack;
+	private final ItemStackTemplate resultStack;
 	private final NonNullList<Ingredient> ingredients = NonNullList.create();
 	private final Map<String, Criterion<?>> criteria = new LinkedHashMap<>();
 	@Nullable
 	private String group;
 
 	public SCShapelessRecipeBuilder(RecipeCategory category, ItemLike result, int count) {
-		this(category, new ItemStack(result, count));
+		this(category, new ItemStackTemplate(result.asItem(), count));
 	}
 
 	public SCShapelessRecipeBuilder(RecipeCategory category, ItemStack result) {
+		this(category, ItemStackTemplate.fromNonEmptyStack(result));
+	}
+
+	public SCShapelessRecipeBuilder(RecipeCategory category, ItemStackTemplate result) {
 		this.category = category;
-		this.result = result.getItem();
+		this.result = result.item().value();
 		this.resultStack = result;
 	}
 
@@ -138,7 +142,7 @@ public class SCShapelessRecipeBuilder implements RecipeBuilder {
 		ShapelessRecipe shapelessRecipe = new ShapelessRecipe(
 				RecipeBuilder.createCraftingCommonInfo(true),
 				RecipeBuilder.createCraftingBookInfo(this.category, Objects.requireNonNullElse(this.group, "")),
-				ItemStackTemplate.fromNonEmptyStack(this.resultStack),
+				this.resultStack,
 				this.ingredients
 		);
 		recipeOutput.accept(id, shapelessRecipe, builder.build(id.identifier().withPrefix("recipes/" + this.category.getFolderName() + "/")));
