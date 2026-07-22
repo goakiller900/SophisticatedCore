@@ -9,7 +9,9 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.sprite.SpriteId;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.Identifier;
@@ -97,6 +99,17 @@ public class GuiHelper {
 		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, texData.getTextureName(), x + texData.getXOffset() + halfWidth, y + texData.getYOffset() + halfHeight,
 				(float) texData.getU() + texData.getWidth() - secondHalfWidth, (float) texData.getV() + texData.getHeight() - secondHalfHeight, secondHalfWidth,
 				secondHalfHeight, texData.getTextureWidth(), texData.getTextureHeight());
+	}
+
+	/**
+	 * Renders an item-atlas sprite.  The Identifier overload of
+	 * GuiGraphicsExtractor.blitSprite is specifically for the GUI atlas in
+	 * 26.2; passing an item sprite identifier to it produces the GUI missing
+	 * sprite.  Slot backgrounds and empty-slot hints are item-atlas sprites.
+	 */
+	public static void blitItemSprite(GuiGraphicsExtractor guiGraphics, Identifier sprite, int x, int y, int width, int height) {
+		TextureAtlasSprite atlasSprite = guiGraphics.getSprite(new SpriteId(TextureAtlas.LOCATION_ITEMS, sprite));
+		guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, atlasSprite, x, y, width, height);
 	}
 
 	public static void coloredBlit(GuiGraphicsExtractor guiGraphics, int x, int y, TextureBlitData texData, int color) {
