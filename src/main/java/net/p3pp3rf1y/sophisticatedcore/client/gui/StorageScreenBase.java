@@ -830,7 +830,7 @@ public abstract class StorageScreenBase<S extends StorageContainerMenuBase<?>> e
 		}
 		Identifier icon = slot.getNoItemIcon();
 		if (icon != null) {
-			GuiHelper.blitItemSprite(guiGraphics, icon, i, j, 16, 16);
+			guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, icon, i, j, 16, 16);
 		}
 	}
 

@@ -247,7 +247,7 @@ public abstract class SettingsScreen extends AbstractContainerScreen<SettingsCon
 			} else {
 				Identifier icon = slot.getNoItemIcon();
 				if (icon != null) {
-					GuiHelper.blitItemSprite(guiGraphics, icon, slot.x, slot.y, 16, 16);
+					guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, icon, slot.x, slot.y, 16, 16);
 				}
 			}
 		}
